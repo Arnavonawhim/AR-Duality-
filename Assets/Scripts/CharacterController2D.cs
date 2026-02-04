@@ -160,6 +160,13 @@ public class CharacterController2D : MonoBehaviour
     public void EnterARMode()
     {
         isInARMode = true;
+        
+        // Stop all movement
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+        }
+        
         Debug.Log("Character entering AR mode");
     }
     
