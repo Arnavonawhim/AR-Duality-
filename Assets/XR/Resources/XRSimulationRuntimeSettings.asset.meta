@@ -1,6 +1,16 @@
 fileFormatVersion: 2
+<<<<<<< HEAD
+<<<<<<<< HEAD:Assets/XR/Resources/XRSimulationRuntimeSettings.asset.meta
 guid: 4b448bbeec9afa8408defa4f4c62cb40
 NativeFormatImporter:
+========
+guid: 32ddf0f128546a1409e24a8a049c6a4e
+DefaultImporter:
+>>>>>>>> d7ca2226f6c8fb466c7634015ffd9229f98842a1:Assets/_Recovery/0 (1).unity.meta
+=======
+guid: a05658232ae9be6439d626e4be7198bb
+NativeFormatImporter:
+>>>>>>> d7ca2226f6c8fb466c7634015ffd9229f98842a1
   externalObjects: {}
   mainObjectFileID: 11400000
   userData: 

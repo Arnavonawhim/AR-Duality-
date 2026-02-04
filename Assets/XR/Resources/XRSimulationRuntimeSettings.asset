@@ -11,7 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e2b12afd4d27418a9cfb2823fe2b9ff3, type: 3}
   m_Name: XRSimulationRuntimeSettings
+<<<<<<< HEAD
   m_EditorClassIdentifier: 
+=======
+  m_EditorClassIdentifier: Unity.XR.Simulation::UnityEngine.XR.Simulation.XRSimulationRuntimeSettings
+>>>>>>> d7ca2226f6c8fb466c7634015ffd9229f98842a1
   m_EnvironmentLayer: 30
   m_EnvironmentScanParams:
     m_MinimumRescanTime: 0.1
