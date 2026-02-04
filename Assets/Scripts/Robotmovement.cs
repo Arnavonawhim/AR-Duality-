@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class RobotMovement : MonoBehaviour
 {
@@ -7,7 +8,7 @@ public class RobotMovement : MonoBehaviour
     public float jumpForce = 10f;
 
     public Transform[] wheels;
-    public Transform bodyHolder;   // assign BodyHolder here
+    public Transform bodyHolder;
 
     Rigidbody rb;
     bool isGrounded;
@@ -19,10 +20,10 @@ public class RobotMovement : MonoBehaviour
 
     void Update()
     {
-        float move = Input.GetAxis("Horizontal");
+        float move = -Input.GetAxis("Horizontal");
 
-        // ✅ Always move in world Z direction
-        transform.position += Vector3.forward * move * moveSpeed * Time.deltaTime;
+        // ✅ Move on WORLD X axis
+        transform.position += Vector3.right * move * moveSpeed * Time.deltaTime;
 
         // ✅ Flip visuals only
         if (move > 0)
@@ -34,13 +35,6 @@ public class RobotMovement : MonoBehaviour
         foreach (Transform wheel in wheels)
         {
             wheel.Rotate(Vector3.right * move * wheelRotationSpeed * Time.deltaTime);
-        }
-
-        // Jump
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
-        {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-            isGrounded = false;
         }
 
         // Better gravity
