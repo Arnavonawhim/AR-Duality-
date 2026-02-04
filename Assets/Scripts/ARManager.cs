@@ -1,16 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
-using Unity.XR.CoreUtils;
 using UnityEngine.XR.ARSubsystems;
 using System.Collections.Generic;
-using TMPro;
 
 public class ARManager : MonoBehaviour
 {
     [Header("AR Components")]
     [SerializeField] private ARSession arSession;
-    [SerializeField] private XROrigin xrOrigin;
+    [SerializeField] private ARSessionOrigin arSessionOrigin;
     [SerializeField] private ARPlaneManager arPlaneManager;
     [SerializeField] private ARRaycastManager arRaycastManager;
     
@@ -23,17 +21,13 @@ public class ARManager : MonoBehaviour
     [Header("UI")]
     [SerializeField] private GameObject arUI; // UI for AR mode (instructions, exit button, etc)
     [SerializeField] private Button exitARButton;
-    [SerializeField] private TextMeshProUGUI instructionText;
+    [SerializeField] private Text instructionText;
     [SerializeField] private Slider scaleSlider; // To scale the player in AR
     
     [Header("AR Settings")]
     [SerializeField] private float defaultARScale = 0.1f; // Scale of player in AR (smaller for table-top)
     [SerializeField] private float minScale = 0.05f;
     [SerializeField] private float maxScale = 0.5f;
-    
-    [Header("Movement Bounds")]
-    [SerializeField] private float maxXDistance = 50f;
-    [SerializeField] private float maxZDistance = 50f;
     
     // Private variables
     private bool isInARMode = false;
@@ -43,7 +37,6 @@ public class ARManager : MonoBehaviour
     private Vector3 virtualStartPosition;
     private Vector3 arStartPosition;
     private Vector3 virtualStartScale;
-    private Vector3 currentAROffset;
     
     private bool isPlayerPlaced = false;
     private List<ARRaycastHit> raycastHits = new List<ARRaycastHit>();
@@ -52,7 +45,7 @@ public class ARManager : MonoBehaviour
     {
         // Disable AR components at start
         if (arSession != null) arSession.enabled = false;
-        if (xrOrigin != null) xrOrigin.gameObject.SetActive(false);
+        if (arSessionOrigin != null) arSessionOrigin.gameObject.SetActive(false);
         if (arCamera != null) arCamera.gameObject.SetActive(false);
         if (arUI != null) arUI.SetActive(false);
         
@@ -79,11 +72,6 @@ public class ARManager : MonoBehaviour
         {
             DetectPlaneAndPlacePlayer();
         }
-        else
-        {
-            // Track AR movement and check bounds
-            TrackARMovement();
-        }
     }
     
     public void EnterARMode(CharacterController2D player)
@@ -93,7 +81,6 @@ public class ARManager : MonoBehaviour
         currentPlayer = player;
         isInARMode = true;
         isPlayerPlaced = false;
-        currentAROffset = Vector3.zero;
         
         // Save virtual world state
         virtualStartPosition = player.transform.position;
@@ -107,7 +94,7 @@ public class ARManager : MonoBehaviour
         
         // Enable AR
         if (arSession != null) arSession.enabled = true;
-        if (xrOrigin != null) xrOrigin.gameObject.SetActive(true);
+        if (arSessionOrigin != null) arSessionOrigin.gameObject.SetActive(true);
         if (arCamera != null) arCamera.gameObject.SetActive(true);
         if (arPlaneManager != null) arPlaneManager.enabled = true;
         
@@ -198,35 +185,6 @@ public class ARManager : MonoBehaviour
         Debug.Log("Player placed in AR at: " + position);
     }
     
-    void TrackARMovement()
-    {
-        if (arPlayerInstance == null) return;
-        
-        // Calculate offset from start position
-        currentAROffset = arPlayerInstance.transform.position - arStartPosition;
-        
-        // Check if player is out of bounds
-        if (Mathf.Abs(currentAROffset.x) > maxXDistance || Mathf.Abs(currentAROffset.z) > maxZDistance)
-        {
-            PlayerDiedOutOfBounds();
-        }
-    }
-    
-    void PlayerDiedOutOfBounds()
-    {
-        Debug.Log("Player went out of bounds in AR and died!");
-        UpdateInstructionText("Out of bounds! Resetting position...");
-        
-        // Reset to AR start position
-        if (arPlayerInstance != null)
-        {
-            arPlayerInstance.transform.position = arStartPosition;
-            currentAROffset = Vector3.zero;
-        }
-        
-        // You can add death effects, sound, etc. here
-    }
-    
     void OnScaleChanged(float newScale)
     {
         if (arPlayerInstance != null)
@@ -256,17 +214,11 @@ public class ARManager : MonoBehaviour
         }
         
         // Convert AR movement to virtual world movement
-        // AR movement is scaled up to virtual world
-        // If player moved 0.25m in AR at 0.1 scale, they move 2.5m in virtual (0.25 / 0.1 = 2.5)
-        float scaleMultiplier = 1f / defaultARScale;
-        Vector3 virtualMovement = new Vector3(
-            arMovementDelta.x * scaleMultiplier,
-            0,
-            arMovementDelta.z * scaleMultiplier
-        );
+        // AR X and Z map to virtual Z (forward/backward in 2.5D)
+        float virtualZMovement = arMovementDelta.z / defaultARScale;
         
         // Apply movement to virtual player
-        Vector3 newVirtualPosition = virtualStartPosition + virtualMovement;
+        Vector3 newVirtualPosition = virtualStartPosition + new Vector3(0, 0, virtualZMovement);
         currentPlayer.transform.position = newVirtualPosition;
         
         // Apply scale changes if any
@@ -276,11 +228,11 @@ public class ARManager : MonoBehaviour
         currentPlayer.gameObject.SetActive(true);
         
         // Notify player controller
-        currentPlayer.ExitARMode(virtualMovement, currentPlayer.transform.localScale);
+        currentPlayer.ExitARMode(arMovementDelta, currentPlayer.transform.localScale);
         
         // Disable AR
         if (arSession != null) arSession.enabled = false;
-        if (xrOrigin != null) xrOrigin.gameObject.SetActive(false);
+        if (arSessionOrigin != null) arSessionOrigin.gameObject.SetActive(false);
         if (arCamera != null) arCamera.gameObject.SetActive(false);
         if (arPlaneManager != null) arPlaneManager.enabled = false;
         
@@ -295,18 +247,12 @@ public class ARManager : MonoBehaviour
         isPlayerPlaced = false;
         currentPlayer = null;
         
-        Debug.Log($"Exited AR Mode - Player moved {virtualMovement} in virtual world, Scale factor: {scaleFactor}");
+        Debug.Log($"Exited AR Mode - Player moved {virtualZMovement} units in virtual world");
     }
     
     void UpdateInstructionText(string message)
     {
         if (instructionText != null)
             instructionText.text = message;
-    }
-    
-    // Public method to check if currently in AR mode
-    public bool IsInARMode()
-    {
-        return isInARMode;
     }
 }
