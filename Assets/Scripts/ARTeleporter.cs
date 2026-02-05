@@ -1,59 +1,33 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public class ARTeleporter : MonoBehaviour
 {
-    [Header("UI References")]
-    [SerializeField] private GameObject arPromptUI;
-    [SerializeField] private Button enterARButton;
-    
-    [Header("Scene Settings")]
-    [SerializeField] private string arSceneName = "ARScene";
-    
-    private bool playerInRange = false;
-    private CharacterController2D playerController;
-    
-    void Start()
-    {
-        if (arPromptUI != null) arPromptUI.SetActive(false);
-        if (enterARButton != null) enterARButton.onClick.AddListener(OnEnterARButtonPressed);
-    }
-    
-    void OnTriggerEnter(Collider other)
+    public GameObject promptUI;
+
+    void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Player"))
         {
-            playerInRange = true;
-            playerController = other.GetComponent<CharacterController2D>();
-            
-            if (arPromptUI != null) arPromptUI.SetActive(true);
+            promptUI.SetActive(true);
         }
     }
-    
-    void OnTriggerExit(Collider other)
+
+    void OnTriggerExit2D(Collider2D other)
     {
         if (other.CompareTag("Player"))
         {
-            playerInRange = false;
-            playerController = null;
-            
-            if (arPromptUI != null) arPromptUI.SetActive(false);
+            promptUI.SetActive(false);
         }
     }
-    
-    void OnEnterARButtonPressed()
+
+    public void EnterARWorld()
     {
-        if (playerInRange && playerController != null)
+        PlayerController player = FindObjectOfType<PlayerController>();
+        if (GameDataManager.Instance != null)
         {
-            if (ARDataManager.Instance != null)
-            {
-                ARDataManager.Instance.SetVirtualStartPosition(playerController.transform.position);
-            }
-            
-            if (arPromptUI != null) arPromptUI.SetActive(false);
-            
-            SceneManager.LoadScene(arSceneName);
+            GameDataManager.Instance.EnterAR(player.transform.position);
         }
+        SceneManager.LoadScene("ARScene");
     }
 }
