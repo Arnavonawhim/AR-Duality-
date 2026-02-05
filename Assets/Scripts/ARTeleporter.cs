@@ -1,73 +1,59 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class ARTeleporter : MonoBehaviour
 {
     [Header("UI References")]
-    [SerializeField] private GameObject arPromptUI; // Panel with "Enter AR" button
+    [SerializeField] private GameObject arPromptUI;
     [SerializeField] private Button enterARButton;
     
-    [Header("AR Manager")]
-    [SerializeField] private ARManager arManager;
+    [Header("Scene Settings")]
+    [SerializeField] private string arSceneName = "ARScene";
     
     private bool playerInRange = false;
     private CharacterController2D playerController;
     
     void Start()
     {
-        // Hide prompt at start
-        if (arPromptUI != null)
-            arPromptUI.SetActive(false);
-        
-        // Setup button listener
-        if (enterARButton != null)
-            enterARButton.onClick.AddListener(OnEnterARButtonPressed);
+        if (arPromptUI != null) arPromptUI.SetActive(false);
+        if (enterARButton != null) enterARButton.onClick.AddListener(OnEnterARButtonPressed);
     }
     
     void OnTriggerEnter(Collider other)
     {
-        // Check if player entered the teleporter
         if (other.CompareTag("Player"))
         {
             playerInRange = true;
             playerController = other.GetComponent<CharacterController2D>();
             
-            // Show AR prompt
-            if (arPromptUI != null)
-                arPromptUI.SetActive(true);
-            
-            Debug.Log("Player entered AR teleporter zone");
+            if (arPromptUI != null) arPromptUI.SetActive(true);
         }
     }
     
     void OnTriggerExit(Collider other)
     {
-        // Check if player left the teleporter
         if (other.CompareTag("Player"))
         {
             playerInRange = false;
             playerController = null;
             
-            // Hide AR prompt
-            if (arPromptUI != null)
-                arPromptUI.SetActive(false);
-            
-            Debug.Log("Player left AR teleporter zone");
+            if (arPromptUI != null) arPromptUI.SetActive(false);
         }
     }
     
     void OnEnterARButtonPressed()
     {
-        if (playerInRange && playerController != null && arManager != null)
+        if (playerInRange && playerController != null)
         {
-            // Hide the prompt
-            if (arPromptUI != null)
-                arPromptUI.SetActive(false);
+            if (ARDataManager.Instance != null)
+            {
+                ARDataManager.Instance.SetVirtualStartPosition(playerController.transform.position);
+            }
             
-            // Enter AR mode
-            arManager.EnterARMode(playerController);
+            if (arPromptUI != null) arPromptUI.SetActive(false);
             
-            Debug.Log("Entering AR Mode!");
+            SceneManager.LoadScene(arSceneName);
         }
     }
 }

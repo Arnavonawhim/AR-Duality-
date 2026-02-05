@@ -4,200 +4,276 @@ using UnityEngine.InputSystem;
 
 public class CharacterController2D : MonoBehaviour
 {
-    [Header("Movement Settings")]
-    [SerializeField] private float walkSpeed = 5f;
-    [SerializeField] private float runSpeed = 10f;
+    [Header("Movement")]
+    [SerializeField] private float walkSpeed = 7f;
+    [SerializeField] private float runSpeed = 12f;
+    [SerializeField] private float acceleration = 60f;
+    [SerializeField] private float deceleration = 60f;
+    [SerializeField] private float airAcceleration = 40f;
+    
+    [Header("Jump")]
+    [SerializeField] private float jumpForce = 15f;
+    [SerializeField] private float fallMultiplier = 2.5f;
+    [SerializeField] private float lowJumpMultiplier = 2f;
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private float groundCheckRadius = 0.3f;
+    [SerializeField] private float coyoteTime = 0.15f;
+    [SerializeField] private float jumpBufferTime = 0.2f;
+    
+    [Header("Attack")]
+    [SerializeField] private Transform attackPoint;
+    [SerializeField] private float attackRange = 1.5f;
+    [SerializeField] private LayerMask enemyLayer;
+    [SerializeField] private float attackCooldown = 0.35f;
     
     [Header("Animation")]
     [SerializeField] private Animator animator;
     
-    [Header("UI Buttons (Optional - for Mobile)")]
+    [Header("UI Buttons")]
     [SerializeField] private Button leftButton;
     [SerializeField] private Button rightButton;
+    [SerializeField] private Button jumpButton;
     [SerializeField] private Button attackButton;
     
-    // Private variables
+    [Header("Scale Reset")]
+    [SerializeField] private float scaleResetTime = 5f;
+    
     private Rigidbody rb;
     private float moveInput;
+    private float buttonMoveInput = 0f;
+    private float currentVelocityX = 0f;
+    private bool isGrounded;
     private bool isRunning = false;
     private bool isFacingRight = true;
+    private bool canAttack = true;
+    private float attackTimer = 0f;
+    private float scaleTimer = 0f;
+    private float targetScale = 1f;
+    private bool needsScaleReset = false;
     
-    // For UI button control
-    private float buttonMoveInput = 0f;
-    
-    // AR mode flag
-    private bool isInARMode = false;
+    private float coyoteTimeCounter;
+    private float jumpBufferCounter;
+    private bool jumpPressed = false;
     
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
         
-        // Get animator if not assigned
-        if (animator == null)
-        {
-            animator = GetComponent<Animator>();
-        }
+        if (animator == null) animator = GetComponent<Animator>();
         
-        // Setup button listeners if buttons are assigned
         SetupButtons();
-        
-        Debug.Log("Character Controller Started!");
+        CheckARReturn();
+    }
+    
+    void CheckARReturn()
+    {
+        if (ARDataManager.Instance != null && ARDataManager.Instance.HasARData)
+        {
+            Vector3 arMovement = ARDataManager.Instance.ArMovementDelta;
+            float arScale = ARDataManager.Instance.ArScale;
+            
+            float virtualXMovement = arMovement.x * 10f;
+            Vector3 newPosition = ARDataManager.Instance.VirtualStartPosition + new Vector3(virtualXMovement, 0, 0);
+            transform.position = newPosition;
+            
+            if (arScale != 1f)
+            {
+                transform.localScale = Vector3.one * arScale;
+                targetScale = arScale;
+                needsScaleReset = true;
+                scaleTimer = 0f;
+            }
+            
+            ARDataManager.Instance.ClearARData();
+        }
     }
     
     void SetupButtons()
     {
-        // Setup Left Button
         if (leftButton != null)
         {
-            var leftTrigger = leftButton.gameObject.GetComponent<UnityEngine.EventSystems.EventTrigger>();
-            if (leftTrigger == null)
-            {
-                leftTrigger = leftButton.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
-            }
-            
-            var pointerDownLeft = new UnityEngine.EventSystems.EventTrigger.Entry();
-            pointerDownLeft.eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown;
-            pointerDownLeft.callback.AddListener((data) => { OnLeftButtonDown(); });
-            leftTrigger.triggers.Add(pointerDownLeft);
-            
-            var pointerUpLeft = new UnityEngine.EventSystems.EventTrigger.Entry();
-            pointerUpLeft.eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp;
-            pointerUpLeft.callback.AddListener((data) => { OnMoveButtonUp(); });
-            leftTrigger.triggers.Add(pointerUpLeft);
+            var leftTrigger = leftButton.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+            var pdLeft = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown };
+            pdLeft.callback.AddListener((data) => { buttonMoveInput = -1f; });
+            leftTrigger.triggers.Add(pdLeft);
+            var puLeft = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp };
+            puLeft.callback.AddListener((data) => { buttonMoveInput = 0f; });
+            leftTrigger.triggers.Add(puLeft);
         }
         
-        // Setup Right Button
         if (rightButton != null)
         {
-            var rightTrigger = rightButton.gameObject.GetComponent<UnityEngine.EventSystems.EventTrigger>();
-            if (rightTrigger == null)
-            {
-                rightTrigger = rightButton.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
-            }
-            
-            var pointerDownRight = new UnityEngine.EventSystems.EventTrigger.Entry();
-            pointerDownRight.eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown;
-            pointerDownRight.callback.AddListener((data) => { OnRightButtonDown(); });
-            rightTrigger.triggers.Add(pointerDownRight);
-            
-            var pointerUpRight = new UnityEngine.EventSystems.EventTrigger.Entry();
-            pointerUpRight.eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp;
-            pointerUpRight.callback.AddListener((data) => { OnMoveButtonUp(); });
-            rightTrigger.triggers.Add(pointerUpRight);
+            var rightTrigger = rightButton.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+            var pdRight = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown };
+            pdRight.callback.AddListener((data) => { buttonMoveInput = 1f; });
+            rightTrigger.triggers.Add(pdRight);
+            var puRight = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp };
+            puRight.callback.AddListener((data) => { buttonMoveInput = 0f; });
+            rightTrigger.triggers.Add(puRight);
         }
         
-        // Setup Attack Button
-        if (attackButton != null)
-        {
-            attackButton.onClick.AddListener(OnAttackButton);
-        }
+        if (jumpButton != null) jumpButton.onClick.AddListener(() => jumpPressed = true);
+        if (attackButton != null) attackButton.onClick.AddListener(Attack);
     }
     
     void Update()
     {
-        // Don't process input if in AR mode
-        if (isInARMode) return;
+        CheckGrounded();
         
-        // Combine keyboard and button input
         float keyboardInput = 0f;
-        
-        // Check for keyboard input (for PC testing)
         if (Keyboard.current != null)
         {
-            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed)
-                keyboardInput = -1f;
-            else if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed)
-                keyboardInput = 1f;
-                
-            // Run with shift
+            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) keyboardInput = -1f;
+            else if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) keyboardInput = 1f;
+            
             isRunning = Keyboard.current.leftShiftKey.isPressed;
+            
+            if (Keyboard.current.spaceKey.wasPressedThisFrame) jumpPressed = true;
+            if (Keyboard.current.jKey.wasPressedThisFrame) Attack();
         }
         
-        // Combine both inputs
         moveInput = buttonMoveInput != 0f ? buttonMoveInput : keyboardInput;
         
-        // Handle sprite/model flipping
-        if (moveInput > 0 && !isFacingRight)
+        if (moveInput > 0 && !isFacingRight) Flip();
+        else if (moveInput < 0 && isFacingRight) Flip();
+        
+        if (isGrounded)
         {
-            Flip();
+            coyoteTimeCounter = coyoteTime;
         }
-        else if (moveInput < 0 && isFacingRight)
+        else
         {
-            Flip();
+            coyoteTimeCounter -= Time.deltaTime;
         }
         
-        // Update animator parameters if animator exists
+        if (jumpPressed)
+        {
+            jumpBufferCounter = jumpBufferTime;
+            jumpPressed = false;
+        }
+        else
+        {
+            jumpBufferCounter -= Time.deltaTime;
+        }
+        
+        if (jumpBufferCounter > 0f && coyoteTimeCounter > 0f)
+        {
+            Jump();
+            jumpBufferCounter = 0f;
+        }
+        
         if (animator != null)
         {
-            animator.SetFloat("Speed", Mathf.Abs(moveInput));
+            animator.SetFloat("Speed", Mathf.Abs(currentVelocityX));
+            animator.SetBool("IsGrounded", isGrounded);
             animator.SetBool("IsRunning", isRunning && moveInput != 0);
+            animator.SetFloat("VelocityY", rb.linearVelocity.y);
+        }
+        
+        if (!canAttack)
+        {
+            attackTimer += Time.deltaTime;
+            if (attackTimer >= attackCooldown)
+            {
+                canAttack = true;
+                attackTimer = 0f;
+            }
+        }
+        
+        if (needsScaleReset)
+        {
+            scaleTimer += Time.deltaTime;
+            float progress = scaleTimer / scaleResetTime;
+            float currentScaleValue = Mathf.Lerp(targetScale, 1f, progress);
+            transform.localScale = new Vector3(isFacingRight ? currentScaleValue : -currentScaleValue, currentScaleValue, currentScaleValue);
+            
+            if (scaleTimer >= scaleResetTime)
+            {
+                transform.localScale = new Vector3(isFacingRight ? 1f : -1f, 1f, 1f);
+                targetScale = 1f;
+                needsScaleReset = false;
+                scaleTimer = 0f;
+            }
         }
     }
     
     void FixedUpdate()
     {
-        // Don't move if in AR mode
-        if (isInARMode) return;
+        float targetSpeed = moveInput * (isRunning ? runSpeed : walkSpeed);
+        float accelRate = Mathf.Abs(targetSpeed) > 0.01f ? acceleration : deceleration;
         
-        // Calculate movement speed
-        float currentSpeed = isRunning ? runSpeed : walkSpeed;
+        if (!isGrounded) accelRate = airAcceleration;
         
-        // Apply movement on Z axis for 2.5D
-        Vector3 newVelocity = new Vector3(0f, rb.linearVelocity.y, moveInput * currentSpeed);
-        rb.linearVelocity = newVelocity;
+        float speedDiff = targetSpeed - currentVelocityX;
+        float movement = speedDiff * accelRate;
+        
+        currentVelocityX = Mathf.MoveTowards(currentVelocityX, targetSpeed, Mathf.Abs(movement) * Time.fixedDeltaTime);
+        
+        rb.linearVelocity = new Vector3(currentVelocityX, rb.linearVelocity.y, 0f);
+        
+        if (rb.linearVelocity.y < 0)
+        {
+            rb.linearVelocity += Vector3.up * Physics.gravity.y * (fallMultiplier - 1) * Time.fixedDeltaTime;
+        }
+        else if (rb.linearVelocity.y > 0)
+        {
+            rb.linearVelocity += Vector3.up * Physics.gravity.y * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
+        }
+    }
+    
+    void Jump()
+    {
+        if (!isGrounded) return;
+        
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, 0f);
+        coyoteTimeCounter = 0f;
+    }
+    
+    public void Attack()
+    {
+        if (!canAttack) return;
+        
+        canAttack = false;
+        
+        if (animator != null) animator.SetTrigger("Attack");
+        
+        Collider[] hitEnemies = Physics.OverlapSphere(attackPoint.position, attackRange, enemyLayer);
+        
+        foreach (Collider enemy in hitEnemies)
+        {
+            Debug.Log("Hit enemy: " + enemy.name);
+        }
     }
     
     void Flip()
     {
         isFacingRight = !isFacingRight;
         Vector3 scale = transform.localScale;
-        scale.z *= -1;
+        scale.x *= -1;
         transform.localScale = scale;
     }
     
-    // ===== AR MODE CALLBACKS =====
-    
-    public void EnterARMode()
+    void CheckGrounded()
     {
-        isInARMode = true;
-        Debug.Log("Character entering AR mode");
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundCheckRadius, groundLayer);
     }
     
-    public void ExitARMode(Vector3 arMovementDelta, Vector3 newScale)
+    void OnDrawGizmosSelected()
     {
-        isInARMode = false;
-        Debug.Log($"Character exited AR mode - Movement: {arMovementDelta}, Scale: {newScale}");
-    }
-    
-    // ===== UI BUTTON CALLBACKS =====
-    
-    public void OnLeftButtonDown()
-    {
-        buttonMoveInput = -1f;
-    }
-    
-    public void OnRightButtonDown()
-    {
-        buttonMoveInput = 1f;
-    }
-    
-    public void OnMoveButtonUp()
-    {
-        buttonMoveInput = 0f;
-    }
-    
-    public void OnAttackButton()
-    {
-        Attack();
-    }
-    
-    void Attack()
-    {
-        Debug.Log("Attack button pressed!");
-        
-        if (animator != null)
+        if (groundCheck != null)
         {
-            // animator.SetTrigger("Attack");
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        }
+        
+        if (attackPoint != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(attackPoint.position, attackRange);
         }
     }
 }
