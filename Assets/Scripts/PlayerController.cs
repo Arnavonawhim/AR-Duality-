@@ -78,21 +78,47 @@ public class PlayerController : MonoBehaviour
 
         hasAppliedARData = true;
         
+        Vector3 savedPosition = GameDataManager.Instance.PlayerPositionBeforeAR;
         Vector3 arMovement = GameDataManager.Instance.ARMovementDelta;
         float arScale = GameDataManager.Instance.ARScaleMultiplier;
         
-        transform.position += new Vector3(arMovement.x * 10f, 0, arMovement.z * 10f);
+        // Scene is 180 degrees rotated, so invert the AR movement:
+        // Left in AR (negative X/Z) = +X in game
+        // Right in AR (positive X/Z) = -X in game
+        float invertedMovementX = -(arMovement.x + arMovement.z);
         
+        // Apply scale first
         currentScaleMultiplier = arScale;
         scaleTimer = GameDataManager.Instance.ScaleTimer;
         transform.localScale = baseScale * currentScaleMultiplier;
+        
+        // Calculate new X position with inverted AR movement
+        float newX = savedPosition.x + invertedMovementX;
+        
+        // If scaled, drop from y=200 so the player lands on the ground properly
+        // Otherwise, use the saved Y position
+        float newY = (currentScaleMultiplier != 1f) ? 200f : savedPosition.y;
+        
+        transform.position = new Vector3(newX, newY, savedPosition.z);
         
         if (scaleTimerUI != null && currentScaleMultiplier != 1f)
             scaleTimerUI.SetActive(true);
         
         GameDataManager.Instance.ClearARData();
         
-        Debug.Log($"Applied AR Data: Movement={arMovement}, Scale={arScale}");
+        Debug.Log($"Applied AR Data: Position={savedPosition}, Movement={arMovement}, InvertedX={invertedMovementX}, Scale={arScale}, DropY={newY}");
+    }
+    
+    void ApplyScaleWithGroundAdjustment()
+    {
+        Vector3 oldScale = transform.localScale;
+        Vector3 newScale = baseScale * currentScaleMultiplier;
+        
+        float scaleDiff = newScale.y - oldScale.y;
+        float heightAdjustment = scaleDiff * 0.5f;
+        
+        transform.localScale = newScale;
+        transform.position += new Vector3(0, heightAdjustment, 0);
     }
 
     void SetupButtons()
@@ -220,6 +246,7 @@ public class PlayerController : MonoBehaviour
     {
         if (scaleTimer > 0)
         {
+            float oldScale = currentScaleMultiplier;
             scaleTimer -= Time.deltaTime;
             
             if (scaleTimerFill != null)
@@ -228,7 +255,7 @@ public class PlayerController : MonoBehaviour
             if (scaleTimer <= 0)
             {
                 currentScaleMultiplier = 1f;
-                transform.localScale = baseScale;
+                ApplyScaleWithGroundAdjustment();
                 if (scaleTimerUI != null) scaleTimerUI.SetActive(false);
             }
         }

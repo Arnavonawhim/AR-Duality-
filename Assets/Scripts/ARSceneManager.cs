@@ -89,6 +89,6 @@ public class ARSceneManager : MonoBehaviour
                 GameDataManager.Instance.ExitAR(robot.GetTotalMovement(), robot.transform.localScale.x);
             }
         }
-        SceneManager.LoadScene("SidescrollerScene");
+        SceneManager.LoadScene("MainGame");
     }
 }

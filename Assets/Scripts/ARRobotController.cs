@@ -55,7 +55,7 @@ public class ARRobotController : MonoBehaviour
 
     public void MoveLeft()
     {
-        moveDirection = -1;
+        moveDirection = 1;
         transform.rotation = Quaternion.Euler(0, -90, 0);
     }
 
