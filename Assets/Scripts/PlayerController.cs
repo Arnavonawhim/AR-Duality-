@@ -9,7 +9,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float moveSpeed = 8f;
     [SerializeField] private float acceleration = 50f;
     [SerializeField] private float deceleration = 50f;
-    [SerializeField] private float airAcceleration = 30f;
+    [SerializeField] private float airAcceleration = 15f;
+    [SerializeField] private float maxAirSpeed = 10f;
 
     [Header("Jumping")]
     [SerializeField] private float jumpForce = 14f;
@@ -40,10 +41,12 @@ public class PlayerController : MonoBehaviour
     private float moveInput;
     private float buttonInput;
     private bool isGrounded;
+    private bool wasGroundedLastFrame;
     private bool isFacingRight = true;
     private float coyoteTimeCounter;
     private float jumpBufferCounter;
     private bool jumpHeld;
+    private bool hasJumped;
     private Vector3 baseScale;
     private float currentScaleMultiplier = 1f;
     private float scaleTimer;
@@ -58,6 +61,14 @@ public class PlayerController : MonoBehaviour
         
         SetupButtons();
         ApplyARData();
+        
+        if (groundLayer == 0)
+        {
+            groundLayer = LayerMask.GetMask("Ground", "Default");
+            Debug.LogWarning("Ground Layer not set! Using Default layer.");
+        }
+        
+        Debug.Log("PlayerController Started. GroundLayer: " + groundLayer.value);
     }
 
     void ApplyARData()
@@ -155,13 +166,25 @@ public class PlayerController : MonoBehaviour
 
     void HandleGroundCheck()
     {
+        wasGroundedLastFrame = isGrounded;
+        
         if (groundCheck != null)
         {
             isGrounded = Physics.CheckSphere(groundCheck.position, groundCheckRadius, groundLayer);
         }
         else
         {
-            isGrounded = Physics.Raycast(transform.position, Vector3.down, 0.6f, groundLayer);
+            isGrounded = Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, 0.7f, groundLayer);
+            if (!isGrounded)
+            {
+                isGrounded = Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, 0.7f);
+            }
+        }
+        
+        if (!wasGroundedLastFrame && isGrounded)
+        {
+            hasJumped = false;
+            Debug.Log("Landed - jump reset");
         }
     }
 
@@ -183,11 +206,12 @@ public class PlayerController : MonoBehaviour
         {
             jumpBufferCounter -= Time.deltaTime;
             
-            if (coyoteTimeCounter > 0)
+            if (coyoteTimeCounter > 0 && !hasJumped)
             {
                 Jump();
                 jumpBufferCounter = 0;
                 coyoteTimeCounter = 0;
+                hasJumped = true;
             }
         }
     }
@@ -238,9 +262,15 @@ public class PlayerController : MonoBehaviour
             airAcceleration;
         
         float movement = speedDiff * accelRate * Time.fixedDeltaTime;
+        float newVelocityX = rb.linearVelocity.x + movement;
+        
+        if (!isGrounded)
+        {
+            newVelocityX = Mathf.Clamp(newVelocityX, -maxAirSpeed, maxAirSpeed);
+        }
         
         rb.linearVelocity = new Vector3(
-            rb.linearVelocity.x + movement,
+            newVelocityX,
             rb.linearVelocity.y,
             0
         );
@@ -260,16 +290,28 @@ public class PlayerController : MonoBehaviour
 
     void Jump()
     {
+        Debug.Log("JUMP! Force: " + jumpForce);
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, 0);
         if (animator != null) animator.SetTrigger("Jump");
+    }
+    
+    public void TryJump()
+    {
+        jumpBufferCounter = jumpBufferTime;
+        jumpHeld = true;
+    }
+    
+    public void ReleaseJump()
+    {
+        jumpHeld = false;
     }
 
     void Flip()
     {
         isFacingRight = !isFacingRight;
-        Vector3 scale = transform.localScale;
-        scale.x *= -1;
-        transform.localScale = scale;
+        Vector3 rotation = transform.eulerAngles;
+        rotation.y = isFacingRight ? -90 : 90;
+        transform.eulerAngles = rotation;
     }
 
     void UpdateAnimator()
