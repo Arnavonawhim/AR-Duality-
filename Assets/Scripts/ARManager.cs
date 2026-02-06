@@ -2,121 +2,64 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
-using Unity.XR.CoreUtils;
-using TMPro;
 using System.Collections.Generic;
 
-/*public class ARManager : MonoBehaviour
+public class ARManager : MonoBehaviour
 {
     [Header("AR Components")]
     [SerializeField] private ARSession arSession;
-    [SerializeField] private XROrigin xrOrigin;
+    [SerializeField] private ARSessionOrigin arSessionOrigin;
     [SerializeField] private ARPlaneManager arPlaneManager;
     [SerializeField] private ARRaycastManager arRaycastManager;
+    
+    [Header("AR Camera")]
     [SerializeField] private Camera arCamera;
     
     [Header("Virtual Camera")]
-    [SerializeField] private Camera virtualCamera;
+    [SerializeField] private Camera virtualCamera; // Your normal game camera
     
     [Header("UI")]
-    [SerializeField] private GameObject arUI;
+    [SerializeField] private GameObject arUI; // UI for AR mode (instructions, exit button, etc)
     [SerializeField] private Button exitARButton;
-    [SerializeField] private TMP_Text instructionText;
-    [SerializeField] private Slider scaleSlider;
-    [SerializeField] private Button leftButton;
-    [SerializeField] private Button rightButton;
-    [SerializeField] private Button forwardButton;
-    [SerializeField] private Button backButton;
+    [SerializeField] private Text instructionText;
+    [SerializeField] private Slider scaleSlider; // To scale the player in AR
     
     [Header("AR Settings")]
-    [SerializeField] private float arMoveSpeed = 0.5f;
-    [SerializeField] private float maxARDistance = 3f;
-    [SerializeField] private float minScale = 0.5f;
-    [SerializeField] private float maxScale = 2.5f;
-    [SerializeField] private float defaultScale = 1f;
+    [SerializeField] private float defaultARScale = 0.1f; // Scale of player in AR (smaller for table-top)
+    [SerializeField] private float minScale = 0.05f;
+    [SerializeField] private float maxScale = 0.5f;
     
-    [Header("Enemy Settings")]
-    [SerializeField] private GameObject photonEnemyPrefab;
-    [SerializeField] private GameObject antiMatterEnemyPrefab;
-    [SerializeField] private int minEnemies = 2;
-    [SerializeField] private int maxEnemies = 5;
-    [SerializeField] private float enemySpawnRadius = 2f;
-    
+    // Private variables
     private bool isInARMode = false;
     private CharacterController2D currentPlayer;
     private GameObject arPlayerInstance;
+    
     private Vector3 virtualStartPosition;
     private Vector3 arStartPosition;
-    private float currentScale = 1f;
+    private Vector3 virtualStartScale;
+    
     private bool isPlayerPlaced = false;
     private List<ARRaycastHit> raycastHits = new List<ARRaycastHit>();
-    private Vector2 moveInput = Vector2.zero;
-    private List<GameObject> spawnedEnemies = new List<GameObject>();
     
     void Start()
     {
+        // Disable AR components at start
         if (arSession != null) arSession.enabled = false;
-        if (xrOrigin != null) xrOrigin.gameObject.SetActive(false);
+        if (arSessionOrigin != null) arSessionOrigin.gameObject.SetActive(false);
         if (arCamera != null) arCamera.gameObject.SetActive(false);
         if (arUI != null) arUI.SetActive(false);
         
-        if (exitARButton != null) exitARButton.onClick.AddListener(ExitARMode);
+        // Setup exit button
+        if (exitARButton != null)
+            exitARButton.onClick.AddListener(ExitARMode);
         
+        // Setup scale slider
         if (scaleSlider != null)
         {
             scaleSlider.minValue = minScale;
             scaleSlider.maxValue = maxScale;
-            scaleSlider.value = defaultScale;
+            scaleSlider.value = defaultARScale;
             scaleSlider.onValueChanged.AddListener(OnScaleChanged);
-        }
-        
-        SetupMoveButtons();
-    }
-    
-    void SetupMoveButtons()
-    {
-        if (leftButton != null)
-        {
-            var leftTrigger = leftButton.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
-            var pdLeft = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown };
-            pdLeft.callback.AddListener((data) => { moveInput.x = -1f; });
-            leftTrigger.triggers.Add(pdLeft);
-            var puLeft = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp };
-            puLeft.callback.AddListener((data) => { moveInput.x = 0f; });
-            leftTrigger.triggers.Add(puLeft);
-        }
-        
-        if (rightButton != null)
-        {
-            var rightTrigger = rightButton.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
-            var pdRight = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown };
-            pdRight.callback.AddListener((data) => { moveInput.x = 1f; });
-            rightTrigger.triggers.Add(pdRight);
-            var puRight = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp };
-            puRight.callback.AddListener((data) => { moveInput.x = 0f; });
-            rightTrigger.triggers.Add(puRight);
-        }
-        
-        if (forwardButton != null)
-        {
-            var fwdTrigger = forwardButton.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
-            var pdFwd = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown };
-            pdFwd.callback.AddListener((data) => { moveInput.y = 1f; });
-            fwdTrigger.triggers.Add(pdFwd);
-            var puFwd = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp };
-            puFwd.callback.AddListener((data) => { moveInput.y = 0f; });
-            fwdTrigger.triggers.Add(puFwd);
-        }
-        
-        if (backButton != null)
-        {
-            var backTrigger = backButton.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
-            var pdBack = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerDown };
-            pdBack.callback.AddListener((data) => { moveInput.y = -1f; });
-            backTrigger.triggers.Add(pdBack);
-            var puBack = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = UnityEngine.EventSystems.EventTriggerType.PointerUp };
-            puBack.callback.AddListener((data) => { moveInput.y = 0f; });
-            backTrigger.triggers.Add(puBack);
         }
     }
     
@@ -124,14 +67,10 @@ using System.Collections.Generic;
     {
         if (!isInARMode) return;
         
+        // If player not placed yet, show plane detection instructions
         if (!isPlayerPlaced)
         {
             DetectPlaneAndPlacePlayer();
-        }
-        else
-        {
-            MoveARPlayer();
-            CheckARDistance();
         }
     }
     
@@ -142,179 +81,178 @@ using System.Collections.Generic;
         currentPlayer = player;
         isInARMode = true;
         isPlayerPlaced = false;
-        currentScale = defaultScale;
         
+        // Save virtual world state
         virtualStartPosition = player.transform.position;
+        virtualStartScale = player.transform.localScale;
+        
+        // Notify player controller
         player.EnterARMode();
+        
+        // Hide player in virtual world
         player.gameObject.SetActive(false);
         
+        // Enable AR
         if (arSession != null) arSession.enabled = true;
-        if (xrOrigin != null) xrOrigin.gameObject.SetActive(true);
+        if (arSessionOrigin != null) arSessionOrigin.gameObject.SetActive(true);
         if (arCamera != null) arCamera.gameObject.SetActive(true);
         if (arPlaneManager != null) arPlaneManager.enabled = true;
         
+        // Switch cameras
         if (virtualCamera != null) virtualCamera.gameObject.SetActive(false);
-        if (arUI != null) arUI.SetActive(true);
+        if (arCamera != null) arCamera.gameObject.SetActive(true);
         
-        UpdateInstructionText("Point at flat surface and tap to place");
+        // Show AR UI
+        if (arUI != null) arUI.SetActive(true);
+        UpdateInstructionText("Point camera at a flat surface to place player");
+        
+        Debug.Log("AR Mode Activated - Detecting planes...");
     }
     
     void DetectPlaneAndPlacePlayer()
     {
+        // Raycast from center of screen
         if (arRaycastManager != null && arRaycastManager.Raycast(new Vector2(Screen.width / 2, Screen.height / 2), raycastHits, TrackableType.PlaneWithinPolygon))
         {
+            // Get the first hit
             Pose hitPose = raycastHits[0].pose;
             
+            // Check for touch/tap to place
             bool shouldPlace = false;
+            
             #if UNITY_EDITOR
-            if (Input.GetMouseButtonDown(0)) shouldPlace = true;
+            // For testing in editor
+            if (Input.GetMouseButtonDown(0))
+                shouldPlace = true;
             #else
-            if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began) shouldPlace = true;
+            // For mobile
+            if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+                shouldPlace = true;
             #endif
             
             if (shouldPlace)
             {
-                PlacePlayerInAR(hitPose.position);
+                PlacePlayerInAR(hitPose.position, hitPose.rotation);
             }
             else
             {
-                UpdateInstructionText("Tap to place robot");
+                UpdateInstructionText("Tap to place player here");
             }
+        }
+        else
+        {
+            UpdateInstructionText("Point camera at a flat surface");
         }
     }
     
-    void PlacePlayerInAR(Vector3 position)
+    void PlacePlayerInAR(Vector3 position, Quaternion rotation)
     {
         if (currentPlayer == null) return;
         
-        arPlayerInstance = Instantiate(currentPlayer.gameObject, position, Quaternion.identity);
+        // Create AR instance of player
+        arPlayerInstance = Instantiate(currentPlayer.gameObject, position, rotation);
         arPlayerInstance.SetActive(true);
-        arPlayerInstance.transform.localScale = Vector3.one * 0.1f;
         
-        var controller = arPlayerInstance.GetComponent<CharacterController2D>();
-        if (controller != null) controller.enabled = false;
+        // Scale down for AR
+        arPlayerInstance.transform.localScale = virtualStartScale * defaultARScale;
         
-        var rb = arPlayerInstance.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.isKinematic = true;
-            rb.useGravity = false;
-        }
+        // Disable the character controller script on AR instance (we'll move it manually)
+        var arPlayerController = arPlayerInstance.GetComponent<CharacterController2D>();
+        if (arPlayerController != null)
+            arPlayerController.enabled = false;
         
+        // Enable rigidbody but make it kinematic
+        var arRb = arPlayerInstance.GetComponent<Rigidbody>();
+        if (arRb != null)
+            arRb.isKinematic = true;
+        
+        // Save AR start position
         arStartPosition = position;
         isPlayerPlaced = true;
         
+        // Disable plane detection
         if (arPlaneManager != null)
         {
             arPlaneManager.enabled = false;
+            // Hide all detected planes
             foreach (var plane in arPlaneManager.trackables)
+            {
                 plane.gameObject.SetActive(false);
+            }
         }
         
-        SpawnEnemies();
-        UpdateInstructionText("Move and scale the robot!");
-    }
-    
-    void MoveARPlayer()
-    {
-        if (arPlayerInstance == null || moveInput.magnitude < 0.01f) return;
-        
-        Vector3 forward = arCamera.transform.forward;
-        Vector3 right = arCamera.transform.right;
-        forward.y = 0f;
-        right.y = 0f;
-        forward.Normalize();
-        right.Normalize();
-        
-        Vector3 movement = (right * moveInput.x + forward * moveInput.y) * arMoveSpeed * Time.deltaTime;
-        arPlayerInstance.transform.position += movement;
-    }
-    
-    void CheckARDistance()
-    {
-        if (arPlayerInstance == null) return;
-        
-        float distance = Vector3.Distance(arPlayerInstance.transform.position, arStartPosition);
-        if (distance > maxARDistance)
-        {
-            KillPlayer();
-        }
-    }
-    
-    void SpawnEnemies()
-    {
-        if (photonEnemyPrefab == null || antiMatterEnemyPrefab == null) return;
-        
-        int enemyCount = Random.Range(minEnemies, maxEnemies + 1);
-        
-        for (int i = 0; i < enemyCount; i++)
-        {
-            Vector2 randomCircle = Random.insideUnitCircle * enemySpawnRadius;
-            Vector3 spawnPos = arStartPosition + new Vector3(randomCircle.x, 0.5f, randomCircle.y);
-            
-            GameObject enemyPrefab = Random.value > 0.5f ? photonEnemyPrefab : antiMatterEnemyPrefab;
-            GameObject enemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
-            enemy.transform.localScale = Vector3.one * 0.1f;
-            spawnedEnemies.Add(enemy);
-        }
+        UpdateInstructionText("Move around! Your movement will transfer to the game");
+        Debug.Log("Player placed in AR at: " + position);
     }
     
     void OnScaleChanged(float newScale)
     {
-        currentScale = newScale;
         if (arPlayerInstance != null)
         {
-            arPlayerInstance.transform.localScale = Vector3.one * 0.1f * newScale;
+            arPlayerInstance.transform.localScale = virtualStartScale * newScale;
         }
-    }
-    
-    void KillPlayer()
-    {
-        UpdateInstructionText("Too far! Returning...");
-        Invoke(nameof(ExitARMode), 1f);
     }
     
     public void ExitARMode()
     {
         if (!isInARMode || currentPlayer == null) return;
         
+        // Calculate movement delta in AR
         Vector3 arMovementDelta = Vector3.zero;
+        float scaleFactor = 1f;
+        
         if (arPlayerInstance != null)
         {
+            // Calculate how much the player moved in AR (X and Z)
             arMovementDelta = arPlayerInstance.transform.position - arStartPosition;
+            
+            // Get scale ratio
+            scaleFactor = arPlayerInstance.transform.localScale.magnitude / virtualStartScale.magnitude;
+            
+            // Destroy AR instance
             Destroy(arPlayerInstance);
         }
         
-        foreach (var enemy in spawnedEnemies)
-        {
-            if (enemy != null) Destroy(enemy);
-        }
-        spawnedEnemies.Clear();
+        // Convert AR movement to virtual world movement
+        // AR X and Z map to virtual Z (forward/backward in 2.5D)
+        float virtualZMovement = arMovementDelta.z / defaultARScale;
         
-        float virtualXMovement = arMovementDelta.x * 10f;
-        Vector3 newVirtualPosition = virtualStartPosition + new Vector3(virtualXMovement, 0, 0);
+        // Apply movement to virtual player
+        Vector3 newVirtualPosition = virtualStartPosition + new Vector3(0, 0, virtualZMovement);
         currentPlayer.transform.position = newVirtualPosition;
-        currentPlayer.transform.localScale = Vector3.one * currentScale;
         
+        // Apply scale changes if any
+        currentPlayer.transform.localScale = virtualStartScale * scaleFactor;
+        
+        // Show player in virtual world
         currentPlayer.gameObject.SetActive(true);
+        
+        // Notify player controller
         currentPlayer.ExitARMode(arMovementDelta, currentPlayer.transform.localScale);
         
+        // Disable AR
         if (arSession != null) arSession.enabled = false;
-        if (xrOrigin != null) xrOrigin.gameObject.SetActive(false);
+        if (arSessionOrigin != null) arSessionOrigin.gameObject.SetActive(false);
         if (arCamera != null) arCamera.gameObject.SetActive(false);
         if (arPlaneManager != null) arPlaneManager.enabled = false;
         
+        // Switch cameras back
         if (virtualCamera != null) virtualCamera.gameObject.SetActive(true);
+        if (arCamera != null) arCamera.gameObject.SetActive(false);
+        
+        // Hide AR UI
         if (arUI != null) arUI.SetActive(false);
         
         isInARMode = false;
         isPlayerPlaced = false;
         currentPlayer = null;
-        moveInput = Vector2.zero;
+        
+        Debug.Log($"Exited AR Mode - Player moved {virtualZMovement} units in virtual world");
     }
     
     void UpdateInstructionText(string message)
     {
-        if (instructionText != null) instructionText.text = message;
+        if (instructionText != null)
+            instructionText.text = message;
     }
-}*/
+}
