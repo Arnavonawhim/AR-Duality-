@@ -6679,13 +6679,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 57.06
-  wheelRotationSpeed: 100
-  jumpForce: 97.2
-  wheels:
-  - {fileID: 24314685}
-  - {fileID: 1276676831}
-  - {fileID: 2124906715}
-  bodyHolder: {fileID: 1959496276}
+  wheelRotationSpeed: 300
+  jumpForce: 10
+  wheels: []
+  bodyHolder: {fileID: 0}
 --- !u!1 &1828429146
 GameObject:
   m_ObjectHideFlags: 0
@@ -7302,7 +7299,7 @@ Transform:
   m_GameObject: {fileID: 1914766191}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -105.2, y: 26.3, z: 61.83}
+  m_LocalPosition: {x: -405.52, y: 62.35, z: 63.91}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7994,11 +7991,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8633474279373035782, guid: e5ab077ea1a094943884110f19148407, type: 3}
       propertyPath: m_LocalScale.x
-      value: 9069.805
+      value: 7661.1997
       objectReference: {fileID: 0}
     - target: {fileID: -8633474279373035782, guid: e5ab077ea1a094943884110f19148407, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -54.9215
+      value: -40.8403
+      objectReference: {fileID: 0}
+    - target: {fileID: -8633474279373035782, guid: e5ab077ea1a094943884110f19148407, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.7631
       objectReference: {fileID: 0}
     - target: {fileID: -6203609119266625749, guid: e5ab077ea1a094943884110f19148407, type: 3}
       propertyPath: m_LocalPosition.x
