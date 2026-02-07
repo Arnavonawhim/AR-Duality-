@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36b04fe2b1e0e2a4890033f2c7e84d04, type: 3}
+  m_Name: EarthWorldData
+  m_EditorClassIdentifier: Assembly-CSharp::WorldData
+  worldType: 0
+  worldName: Earth
+  worldDescription: 
+  characterName: 
+  convaiCharacterId: 93d8116e-0409-11f1-985a-42010a7be027
+  characterPrefab: {fileID: 0}
+  teachingScript: 
+  teachingDuration: 90
+  knowledgePointsRequired: 0
+  powerReward: 0
+  powerName: GravityManipulation
+  powerDescription: Pull Objects towards you
+  nextSceneName: 
+  disableJump: 0
+  worldIcon: {fileID: 0}
+  themeColor: {r: 1, g: 1, b: 1, a: 1}

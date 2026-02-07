@@ -6,9 +6,9 @@ public class WorldMapUI : MonoBehaviour
 {
     [SerializeField] private GameObject mapPanel;
     [SerializeField] private Button closeButton;
+    [SerializeField] private WorldMapEntry sciFiEntry;
     [SerializeField] private WorldMapEntry earthEntry;
     [SerializeField] private WorldMapEntry libraryEntry;
-    [SerializeField] private WorldMapEntry spaceEntry;
     [SerializeField] private TextMeshProUGUI totalPointsText;
     [SerializeField] private TextMeshProUGUI powersText;
     
@@ -37,12 +37,12 @@ public class WorldMapUI : MonoBehaviour
     {
         if (WorldManager.Instance == null) return;
         
+        UpdateEntry(sciFiEntry, WorldType.SciFi);
         UpdateEntry(earthEntry, WorldType.Earth);
         UpdateEntry(libraryEntry, WorldType.Library);
-        UpdateEntry(spaceEntry, WorldType.Space);
         
         if (totalPointsText) totalPointsText.text = $"Knowledge: {WorldManager.Instance.TotalKnowledgePoints}";
-        if (powersText) powersText.text = $"Powers: {WorldManager.Instance.GetUnlockedPowers().Count}/3";
+        if (powersText) powersText.text = $"Powers: {WorldManager.Instance.GetUnlockedPowers().Count}/2";
     }
     
     void UpdateEntry(WorldMapEntry entry, WorldType type)

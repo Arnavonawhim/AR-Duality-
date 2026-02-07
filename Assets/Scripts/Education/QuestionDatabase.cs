@@ -1,35 +1,47 @@
 using UnityEngine;
 
+[System.Serializable]
+public class MCQQuestion
+{
+    [TextArea(2, 3)] public string questionText;
+    public string[] options;
+    public int correctIndex;
+    public DifficultyLevel difficulty;
+    public WorldType world;
+    public int points = 10;
+}
+
 [CreateAssetMenu(fileName = "NewQuestionDatabase", menuName = "QuantumAcademy/Question Database")]
 public class QuestionDatabase : ScriptableObject
 {
     public WorldType worldType;
     public string subject;
-    public Question[] questions;
+    public MCQQuestion[] mcqQuestions;
     
-    public Question[] GetQuestionsForDifficulty(DifficultyLevel difficulty)
+    public MCQQuestion[] GetQuestionsForDifficulty(DifficultyLevel difficulty)
     {
-        var filtered = new System.Collections.Generic.List<Question>();
-        foreach (var q in questions)
-            if (q.difficulty == difficulty) filtered.Add(q);
+        var filtered = new System.Collections.Generic.List<MCQQuestion>();
+        foreach (var q in mcqQuestions)
+            if (q.difficulty == difficulty && q.world == worldType) 
+                filtered.Add(q);
         return filtered.ToArray();
     }
     
-    public Question GetRandomQuestion(DifficultyLevel difficulty)
+    public MCQQuestion[] GetRandomQuestions(DifficultyLevel difficulty, int count)
     {
-        var filtered = GetQuestionsForDifficulty(difficulty);
-        return filtered.Length > 0 ? filtered[Random.Range(0, filtered.Length)] : null;
+        var available = GetQuestionsForDifficulty(difficulty);
+        if (available.Length <= count) return available;
+        
+        var selected = new MCQQuestion[count];
+        var indices = new System.Collections.Generic.List<int>();
+        for (int i = 0; i < available.Length; i++) indices.Add(i);
+        
+        for (int i = 0; i < count; i++)
+        {
+            int idx = Random.Range(0, indices.Count);
+            selected[i] = available[indices[idx]];
+            indices.RemoveAt(idx);
+        }
+        return selected;
     }
-}
-
-[System.Serializable]
-public class Question
-{
-    [TextArea(2, 4)] public string questionText;
-    public string[] acceptableKeywords;
-    [TextArea(2, 4)] public string expectedAnswer;
-    public DifficultyLevel difficulty;
-    public int pointValue = 10;
-    public string hint;
-    [TextArea(1, 2)] public string followUpInfo;
 }

@@ -32,8 +32,8 @@ public class AREducationController : MonoBehaviour
     public UnityEvent<PowerType> OnPowerUnlocked;
     
     private int currentQuestionIndex, correctAnswers, sessionPoints;
-    private Question currentQuestion;
-    private Question[] sessionQuestions;
+    private MCQQuestion currentQuestion;
+    private MCQQuestion[] sessionQuestions;
     private bool sessionActive;
     private GameObject spawnedTutor;
     
@@ -52,10 +52,7 @@ public class AREducationController : MonoBehaviour
         if (questionDatabase == null) return;
         
         var difficulty = EducationSettings.Instance?.CurrentDifficulty ?? DifficultyLevel.Medium;
-        var allQuestions = questionDatabase.GetQuestionsForDifficulty(difficulty);
-        if (allQuestions.Length == 0) allQuestions = questionDatabase.questions;
-        
-        sessionQuestions = SelectRandomQuestions(allQuestions, questionsPerSession);
+        sessionQuestions = questionDatabase.GetRandomQuestions(difficulty, questionsPerSession);
         if (sessionQuestions.Length == 0) return;
         
         currentQuestionIndex = correctAnswers = sessionPoints = 0;
@@ -69,20 +66,6 @@ public class AREducationController : MonoBehaviour
         AskCurrentQuestion();
     }
     
-    private Question[] SelectRandomQuestions(Question[] source, int count)
-    {
-        count = Mathf.Min(count, source.Length);
-        var selected = new Question[count];
-        var shuffled = (Question[])source.Clone();
-        for (int i = 0; i < count; i++)
-        {
-            int j = Random.Range(i, shuffled.Length);
-            (shuffled[i], shuffled[j]) = (shuffled[j], shuffled[i]);
-            selected[i] = shuffled[i];
-        }
-        return selected;
-    }
-    
     public void AskCurrentQuestion()
     {
         if (currentQuestionIndex >= sessionQuestions.Length) { CompleteSession(); return; }
@@ -91,19 +74,16 @@ public class AREducationController : MonoBehaviour
         if (progressText) progressText.text = $"Question {currentQuestionIndex + 1}/{sessionQuestions.Length}";
     }
     
-    public void ValidateAnswer(string studentAnswer)
+    public void ValidateAnswer(int selectedIndex)
     {
         if (!sessionActive || currentQuestion == null) return;
         
-        bool correct = false;
-        string lower = studentAnswer.ToLower();
-        foreach (var kw in currentQuestion.acceptableKeywords)
-            if (lower.Contains(kw.ToLower())) { correct = true; break; }
+        bool correct = selectedIndex == currentQuestion.correctIndex;
         
         if (correct)
         {
             correctAnswers++;
-            sessionPoints += currentQuestion.pointValue;
+            sessionPoints += currentQuestion.points;
             OnCorrectAnswer?.Invoke();
         }
         
@@ -123,7 +103,7 @@ public class AREducationController : MonoBehaviour
         
         if (WorldManager.Instance != null)
         {
-            WorldManager.Instance.AddKnowledgePoints(sessionPoints, currentWorldType);
+            WorldManager.Instance.AddKnowledgePoints(sessionPoints);
             if ((float)correctAnswers / sessionQuestions.Length >= 0.6f)
             {
                 WorldManager.Instance.CompleteWorld(currentWorldType);
@@ -144,7 +124,7 @@ public class AREducationController : MonoBehaviour
         OnPowerUnlocked?.Invoke(worldData.powerReward);
     }
     
-    public string GetCurrentHint() => currentQuestion?.hint ?? "Think about what you've learned...";
+    public MCQQuestion GetCurrentQuestion() => currentQuestion;
     
     public void SkipQuestion()
     {

@@ -8,25 +8,26 @@ public class WorldData : ScriptableObject
     public string worldName;
     [TextArea(2, 4)] public string worldDescription;
     
-    [Header("AR Tutor")]
-    public string tutorName;
-    [TextArea(2, 4)] public string tutorIntroduction;
+    [Header("Convai Character")]
+    public string characterName;
     public string convaiCharacterId;
+    public GameObject characterPrefab;
     
-    [Header("Visuals")]
-    public Sprite worldIcon;
-    public Color worldThemeColor = Color.white;
+    [Header("Teaching Content")]
+    [TextArea(3, 6)] public string teachingScript;
+    public float teachingDuration = 90f;
     
     [Header("Progression")]
     public int knowledgePointsRequired;
     public PowerType powerReward;
     public string powerName;
     [TextArea(2, 4)] public string powerDescription;
+    public string nextSceneName;
     
-    [Header("Educational Content")]
-    public string[] topicsCovered;
+    [Header("World Rules")]
+    public bool disableJump;
     
-    [Header("Scene References")]
-    public string arSceneName;
-    public string platformerSceneName;
+    [Header("Visuals")]
+    public Sprite worldIcon;
+    public Color themeColor = Color.white;
 }

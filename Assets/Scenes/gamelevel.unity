@@ -313,7 +313,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7142065386193f64b9e39ce2e08f53ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
-  parallaxSpeed: 0.5
+  parallaxSpeed: 0.1
 --- !u!1 &69546087
 GameObject:
   m_ObjectHideFlags: 0
@@ -3490,7 +3490,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7142065386193f64b9e39ce2e08f53ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
-  parallaxSpeed: 1
+  parallaxSpeed: 0.5
 --- !u!1 &863427626
 GameObject:
   m_ObjectHideFlags: 0
@@ -4774,7 +4774,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!23 &1161624486
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5976,7 +5976,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7142065386193f64b9e39ce2e08f53ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
-  parallaxSpeed: 0.7
+  parallaxSpeed: 0.2
 --- !u!1 &1555844067
 GameObject:
   m_ObjectHideFlags: 0
@@ -8029,7 +8029,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7142065386193f64b9e39ce2e08f53ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
-  parallaxSpeed: 0.7
+  parallaxSpeed: 0.2
 --- !u!212 &1914225745
 SpriteRenderer:
   serializedVersion: 2
@@ -8894,7 +8894,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7142065386193f64b9e39ce2e08f53ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
-  parallaxSpeed: 0.9
+  parallaxSpeed: 0.3
 --- !u!1 &2024075382
 GameObject:
   m_ObjectHideFlags: 0
@@ -10535,7 +10535,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &952636478384192257
 Transform:
   m_ObjectHideFlags: 0
@@ -12212,7 +12212,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &2671488288188433137
 GameObject:
   m_ObjectHideFlags: 0
@@ -14857,7 +14857,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!33 &5290019429404022368
 MeshFilter:
   m_ObjectHideFlags: 0

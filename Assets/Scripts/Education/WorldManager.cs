@@ -6,12 +6,13 @@ public class WorldManager : MonoBehaviour
     public static WorldManager Instance { get; private set; }
     
     [SerializeField] private WorldData[] allWorlds;
-    [SerializeField] private WorldType currentWorld = WorldType.Earth;
+    [SerializeField] private WorldType currentWorld = WorldType.SciFi;
+    [SerializeField] private TeleporterType currentTeleporterType = TeleporterType.Learning;
+    [SerializeField] private string currentTopic;
     [SerializeField] private int totalKnowledgePoints = 0;
     
     private HashSet<WorldType> completedWorlds = new HashSet<WorldType>();
     private HashSet<PowerType> unlockedPowers = new HashSet<PowerType>();
-    private Dictionary<WorldType, int> worldKnowledgePoints = new Dictionary<WorldType, int>();
     
     public System.Action<int> OnKnowledgePointsChanged;
     public System.Action<WorldType> OnWorldCompleted;
@@ -19,6 +20,8 @@ public class WorldManager : MonoBehaviour
     
     public int TotalKnowledgePoints => totalKnowledgePoints;
     public WorldType CurrentWorld => currentWorld;
+    public TeleporterType CurrentTeleporterType => currentTeleporterType;
+    public string CurrentTopic => currentTopic;
     public WorldData CurrentWorldData => GetWorldData(currentWorld);
     
     void Awake()
@@ -26,15 +29,7 @@ public class WorldManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        InitializeWorldPoints();
         LoadProgress();
-    }
-    
-    private void InitializeWorldPoints()
-    {
-        foreach (WorldType world in System.Enum.GetValues(typeof(WorldType)))
-            if (!worldKnowledgePoints.ContainsKey(world))
-                worldKnowledgePoints[world] = 0;
     }
     
     public WorldData GetWorldData(WorldType worldType)
@@ -44,9 +39,13 @@ public class WorldManager : MonoBehaviour
         return null;
     }
     
+    public void SetCurrentWorld(WorldType world) => currentWorld = world;
+    public void SetTeleporterType(TeleporterType type) => currentTeleporterType = type;
+    public void SetCurrentTopic(string topic) => currentTopic = topic;
+    
     public bool IsWorldUnlocked(WorldType worldType)
     {
-        if (worldType == WorldType.Earth) return true;
+        if (worldType == WorldType.SciFi) return true;
         var worldData = GetWorldData(worldType);
         return worldData != null && totalKnowledgePoints >= worldData.knowledgePointsRequired;
     }
@@ -54,16 +53,12 @@ public class WorldManager : MonoBehaviour
     public bool IsWorldCompleted(WorldType worldType) => completedWorlds.Contains(worldType);
     public bool IsPowerUnlocked(PowerType powerType) => unlockedPowers.Contains(powerType);
     
-    public void AddKnowledgePoints(int points, WorldType world)
+    public void AddKnowledgePoints(int points)
     {
         totalKnowledgePoints += points;
-        if (worldKnowledgePoints.ContainsKey(world)) worldKnowledgePoints[world] += points;
         OnKnowledgePointsChanged?.Invoke(totalKnowledgePoints);
         SaveProgress();
     }
-    
-    public int GetWorldPoints(WorldType worldType) => 
-        worldKnowledgePoints.TryGetValue(worldType, out int points) ? points : 0;
     
     public void CompleteWorld(WorldType worldType)
     {
@@ -85,17 +80,20 @@ public class WorldManager : MonoBehaviour
         SaveProgress();
     }
     
-    public void SetCurrentWorld(WorldType worldType) => currentWorld = worldType;
     public List<PowerType> GetUnlockedPowers() => new List<PowerType>(unlockedPowers);
     public WorldData[] GetAllWorlds() => allWorlds;
+    
+    public string GetNextSceneName()
+    {
+        var worldData = GetWorldData(currentWorld);
+        return worldData?.nextSceneName ?? "";
+    }
     
     private void SaveProgress()
     {
         PlayerPrefs.SetInt("TotalKnowledgePoints", totalKnowledgePoints);
         PlayerPrefs.SetString("CompletedWorlds", string.Join(",", completedWorlds));
         PlayerPrefs.SetString("UnlockedPowers", string.Join(",", unlockedPowers));
-        foreach (var kvp in worldKnowledgePoints)
-            PlayerPrefs.SetInt($"WorldPoints_{kvp.Key}", kvp.Value);
         PlayerPrefs.Save();
     }
     
@@ -112,9 +110,6 @@ public class WorldManager : MonoBehaviour
         if (!string.IsNullOrEmpty(powersStr))
             foreach (string s in powersStr.Split(','))
                 if (System.Enum.TryParse(s, out PowerType p)) unlockedPowers.Add(p);
-        
-        foreach (WorldType world in System.Enum.GetValues(typeof(WorldType)))
-            worldKnowledgePoints[world] = PlayerPrefs.GetInt($"WorldPoints_{world}", 0);
     }
     
     [ContextMenu("Reset Progress")]
@@ -123,7 +118,6 @@ public class WorldManager : MonoBehaviour
         totalKnowledgePoints = 0;
         completedWorlds.Clear();
         unlockedPowers.Clear();
-        InitializeWorldPoints();
         PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
     }

@@ -1,150 +1,109 @@
 using UnityEngine;
+using System.Collections;
 
 public class PowerManager : MonoBehaviour
 {
     public static PowerManager Instance { get; private set; }
     
-    [Header("Durations")]
-    [SerializeField] private float gravityDuration = 10f;
-    [SerializeField] private float timeDuration = 8f;
-    [SerializeField] private float floatDuration = 10f;
+    [Header("Power Settings")]
+    [SerializeField] private float jetpackDuration = 5f;
+    [SerializeField] private float jetpackForce = 15f;
+    [SerializeField] private float gravityPullDuration = 3f;
+    [SerializeField] private float gravityPullRange = 5f;
+    [SerializeField] private float gravityPullForce = 10f;
     
-    [Header("Gravity Power")]
-    [SerializeField] private float heavyScale = 2f;
-    [SerializeField] private float lightScale = 0.5f;
-    [SerializeField] private float lightJumpMultiplier = 1.5f;
-    
-    [Header("Time Power")]
-    [SerializeField] private float slowMotionScale = 0.3f;
-    
-    [Header("Float Power")]
-    [SerializeField] private float floatGravityScale = 0.2f;
+    [Header("References")]
+    [SerializeField] private PlayerController player;
+    [SerializeField] private LayerMask pullableObjects;
     
     private PowerType activePower = PowerType.None;
-    private float powerTimer = 0f;
-    private bool isHeavy = false;
-    private PlayerController playerController;
-    private Rigidbody playerRb;
-    private Vector3 playerBaseScale;
+    private float powerTimer;
+    private bool isPowerActive;
     
-    public System.Action<PowerType> OnPowerActivated;
-    public System.Action<PowerType> OnPowerDeactivated;
-    public System.Action<float, float> OnPowerTimerUpdate;
+    public System.Action<PowerType, float> OnPowerActivated;
+    public System.Action OnPowerDeactivated;
+    public System.Action<float> OnPowerTimerUpdate;
     
+    public bool IsPowerActive => isPowerActive;
     public PowerType ActivePower => activePower;
-    public float PowerTimeRemaining => powerTimer;
-    public bool IsHeavy => isHeavy;
     
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
     }
     
-    void Start() => FindPlayer();
-    
-    void Update() { if (activePower != PowerType.None) UpdatePowerTimer(); }
-    
-    public void FindPlayer()
+    void Start()
     {
-        var player = GameObject.FindWithTag("Player");
-        if (player != null)
+        if (!player) player = FindObjectOfType<PlayerController>();
+    }
+    
+    void Update()
+    {
+        if (isPowerActive)
         {
-            playerController = player.GetComponent<PlayerController>();
-            playerRb = player.GetComponent<Rigidbody>();
-            playerBaseScale = player.transform.localScale;
+            powerTimer -= Time.deltaTime;
+            OnPowerTimerUpdate?.Invoke(powerTimer);
+            
+            if (activePower == PowerType.Jetpack) ApplyJetpack();
+            else if (activePower == PowerType.GravityPull) ApplyGravityPull();
+            
+            if (powerTimer <= 0) DeactivatePower();
         }
     }
     
-    public bool CanActivatePower(PowerType power)
+    public bool CanUsePower(PowerType powerType)
     {
-        if (power == PowerType.None || activePower != PowerType.None) return false;
-        return WorldManager.Instance != null && WorldManager.Instance.IsPowerUnlocked(power);
+        return WorldManager.Instance?.IsPowerUnlocked(powerType) == true && !isPowerActive;
     }
     
-    public bool ActivatePower(PowerType power)
+    public void ActivatePower(PowerType powerType)
     {
-        if (!CanActivatePower(power)) return false;
+        if (!CanUsePower(powerType)) return;
         
-        activePower = power;
-        switch (power)
+        activePower = powerType;
+        isPowerActive = true;
+        
+        powerTimer = powerType switch
         {
-            case PowerType.GravityManipulation:
-                powerTimer = gravityDuration;
-                ToggleGravityManipulation();
-                break;
-            case PowerType.TimeGlimpse:
-                powerTimer = timeDuration;
-                Time.timeScale = slowMotionScale;
-                Time.fixedDeltaTime = 0.02f * Time.timeScale;
-                break;
-            case PowerType.ZeroGFloat:
-                powerTimer = floatDuration;
-                Physics.gravity = new Vector3(0, -9.81f * floatGravityScale, 0);
-                break;
+            PowerType.Jetpack => jetpackDuration,
+            PowerType.GravityPull => gravityPullDuration,
+            _ => 0f
+        };
+        
+        OnPowerActivated?.Invoke(powerType, powerTimer);
+    }
+    
+    void ApplyJetpack()
+    {
+        if (player?.TryGetComponent<Rigidbody>(out Rigidbody rb) == true)
+        {
+            rb.AddForce(Vector3.up * jetpackForce, ForceMode.Force);
         }
-        OnPowerActivated?.Invoke(power);
-        return true;
+    }
+    
+    void ApplyGravityPull()
+    {
+        Collider[] hitColliders = Physics.OverlapSphere(player.transform.position, gravityPullRange, pullableObjects);
+        foreach (var col in hitColliders)
+        {
+            if (col.TryGetComponent<Rigidbody>(out Rigidbody rb))
+            {
+                Vector3 direction = (player.transform.position - col.transform.position).normalized;
+                rb.AddForce(direction * gravityPullForce, ForceMode.Force);
+            }
+        }
     }
     
     public void DeactivatePower()
     {
-        if (activePower == PowerType.None) return;
-        PowerType wasActive = activePower;
-        
-        switch (activePower)
-        {
-            case PowerType.GravityManipulation:
-                isHeavy = false;
-                if (playerController != null) playerController.transform.localScale = playerBaseScale;
-                break;
-            case PowerType.TimeGlimpse:
-                Time.timeScale = 1f;
-                Time.fixedDeltaTime = 0.02f;
-                break;
-            case PowerType.ZeroGFloat:
-                Physics.gravity = new Vector3(0, -9.81f, 0);
-                break;
-        }
-        
+        isPowerActive = false;
         activePower = PowerType.None;
-        powerTimer = 0f;
-        OnPowerDeactivated?.Invoke(wasActive);
+        OnPowerDeactivated?.Invoke();
     }
     
-    public void ToggleGravityManipulation()
+    public bool ShouldDisableJump()
     {
-        if (activePower != PowerType.GravityManipulation) return;
-        isHeavy = !isHeavy;
-        if (playerController != null)
-            playerController.transform.localScale = playerBaseScale * (isHeavy ? heavyScale : lightScale);
+        return WorldManager.Instance?.CurrentWorld == WorldType.SciFi;
     }
-    
-    public float GetJumpMultiplier() => 
-        (activePower == PowerType.GravityManipulation && !isHeavy) ? lightJumpMultiplier : 1f;
-    
-    private void UpdatePowerTimer()
-    {
-        float dt = activePower == PowerType.TimeGlimpse ? Time.unscaledDeltaTime : Time.deltaTime;
-        powerTimer -= dt;
-        
-        float max = activePower switch
-        {
-            PowerType.GravityManipulation => gravityDuration,
-            PowerType.TimeGlimpse => timeDuration,
-            PowerType.ZeroGFloat => floatDuration,
-            _ => 1f
-        };
-        OnPowerTimerUpdate?.Invoke(powerTimer, max);
-        if (powerTimer <= 0) DeactivatePower();
-    }
-    
-    public string GetPowerName(PowerType power) => power switch
-    {
-        PowerType.GravityManipulation => "Gravity Manipulation",
-        PowerType.TimeGlimpse => "Time Glimpse",
-        PowerType.ZeroGFloat => "Zero-G Float",
-        _ => "None"
-    };
 }

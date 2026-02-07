@@ -3,80 +3,63 @@ using UnityEngine;
 public class ConvaiEducationBridge : MonoBehaviour
 {
     [Header("Convai Settings")]
-    [SerializeField] private string characterId = "";
+    [SerializeField] private string apiKey;
     
-    [Header("References")]
-    [SerializeField] private AREducationController educationController;
+    private string activeCharacterId;
+    private bool isListening;
     
-    [Header("Settings")]
-    [SerializeField] private bool useVoiceInput = true;
-    [SerializeField] private bool debugMode = true;
-    
-    // Add Convai SDK components here after importing
+    // Convai SDK components (add when SDK works)
     // private ConvaiNPC convaiNPC;
     
-    private bool isInitialized = false;
-    private bool isListening = false;
-    
-    public bool IsInitialized => isInitialized;
-    public bool IsListening => isListening;
-    
-    void Start() => InitializeConvai();
-    
-    public void InitializeConvai()
+    public void SetActiveCharacter(string characterId)
     {
-        // After importing Convai SDK, uncomment:
-        // convaiNPC = GetComponent<ConvaiNPC>();
-        // convaiNPC.OnUserTranscript += OnUserSpeech;
-        // convaiNPC.OnCharacterResponse += OnCharacterResponse;
-        
-        isInitialized = true;
-        if (debugMode) Debug.Log($"[ConvaiBridge] Ready with character: {characterId}");
+        activeCharacterId = characterId;
+        // Configure Convai NPC with character ID
+        Debug.Log($"[Convai] Active character: {characterId}");
     }
     
-    public void SetCharacter(string newId)
+    public void SendTextInput(string message)
     {
-        characterId = newId;
-        if (isInitialized) InitializeConvai();
+        if (string.IsNullOrEmpty(activeCharacterId))
+        {
+            Debug.LogWarning("[Convai] No active character set!");
+            return;
+        }
+        
+        // Send to Convai API
+        Debug.Log($"[Convai] Sending: {message}");
+        
+        // TODO: Use Convai SDK to send message
+        // convaiNPC.SendTextData(message);
     }
     
     public void StartListening()
     {
-        if (!useVoiceInput) return;
         isListening = true;
-        // convaiNPC?.StartRecording();
-        if (debugMode) Debug.Log("[ConvaiBridge] Listening...");
+        Debug.Log("[Convai] Started voice input");
+        
+        // TODO: Enable Convai microphone input
+        // convaiNPC.StartRecording();
     }
     
     public void StopListening()
     {
-        if (!isListening) return;
         isListening = false;
-        // convaiNPC?.StopRecording();
+        Debug.Log("[Convai] Stopped voice input");
+        
+        // TODO: Disable Convai microphone input
+        // convaiNPC.StopRecording();
     }
     
-    public void SendTextInput(string text)
+    public void SetLanguagePreference(string language)
     {
-        if (string.IsNullOrEmpty(text)) return;
-        // convaiNPC?.SendTextInput(text);
-        if (debugMode) Debug.Log($"[ConvaiBridge] User: {text}");
-        OnUserSpeech(text);
+        // Set Convai language preference (English/Hindi)
+        Debug.Log($"[Convai] Language set to: {language}");
     }
     
-    private void OnUserSpeech(string transcript)
+    // Callback from Convai when response received
+    public void OnConvaiResponse(string response)
     {
-        if (educationController != null)
-            educationController.ValidateAnswer(transcript);
-    }
-    
-    private void OnCharacterResponse(string response)
-    {
-        if (debugMode) Debug.Log($"[ConvaiBridge] AI: {response}");
-    }
-    
-    public void SpeakText(string text)
-    {
-        // convaiNPC?.Speak(text);
-        if (debugMode) Debug.Log($"[ConvaiBridge] Speaking: {text}");
+        Debug.Log($"[Convai] Response: {response}");
     }
 }
