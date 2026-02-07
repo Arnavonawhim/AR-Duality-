@@ -7,47 +7,67 @@ public class RobotMovement : MonoBehaviour
     public float jumpForce = 10f;
 
     public Transform[] wheels;
-    public Transform bodyHolder;   // assign BodyHolder here
+    public Transform bodyHolder;
+    public ParticleSystem jetpackFire;
 
     Rigidbody rb;
     bool isGrounded;
 
+    float moveDirection;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+
+        if (jetpackFire != null)
+        {
+            jetpackFire.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
     }
 
     void Update()
     {
-        float move = Input.GetAxis("Horizontal");
+        // Movement
+        moveDirection = Input.GetAxis("Horizontal");
+        transform.position += Vector3.forward * moveDirection * moveSpeed * Time.deltaTime;
 
-        // ✅ Always move in world Z direction
-        transform.position += Vector3.forward * move * moveSpeed * Time.deltaTime;
-
-        // ✅ Flip visuals only
-        if (move > 0)
+        // Flip
+        if (moveDirection > 0)
             bodyHolder.localRotation = Quaternion.Euler(0, 0, 0);
-        else if (move < 0)
+        else if (moveDirection < 0)
             bodyHolder.localRotation = Quaternion.Euler(0, 180, 0);
 
-        // Rotate wheels
+        // Wheel rotation
         foreach (Transform wheel in wheels)
         {
-            wheel.Rotate(Vector3.right * move * wheelRotationSpeed * Time.deltaTime);
+            wheel.Rotate(Vector3.right * moveDirection * wheelRotationSpeed * Time.deltaTime);
         }
 
         // Jump
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             isGrounded = false;
+
+            if (jetpackFire != null)
+            {
+                jetpackFire.Play(true);
+            }
+        }
+
+        // Stop fire when falling
+        if (rb.linearVelocity.y < 0)
+        {
+            if (jetpackFire != null)
+                jetpackFire.Stop(true, ParticleSystemStopBehavior.StopEmitting);
         }
 
         // Better gravity
         if (rb.linearVelocity.y > 0)
-            rb.AddForce(Vector3.down * 15f);
+            rb.AddForce(Vector3.down * 10f);
         else if (rb.linearVelocity.y < 0)
-            rb.AddForce(Vector3.down * 30f);
+            rb.AddForce(Vector3.down * 20f);
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -55,7 +75,11 @@ public class RobotMovement : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
+
+            if (jetpackFire != null)
+            {
+                jetpackFire.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
         }
     }
 }
-     

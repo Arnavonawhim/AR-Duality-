@@ -5,7 +5,7 @@ public class MenuUI : MonoBehaviour
 {
     public void StartGame()
     {
-        SceneManager.LoadScene("MainGame");
+        SceneManager.LoadScene("levels");
     }
 
     public void QuitGame()
