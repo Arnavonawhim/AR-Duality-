@@ -1,0 +1,137 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e69e75f09943da445a689d628bb1ceb8, type: 3}
+  m_Name: Earth_Questions
+  m_EditorClassIdentifier: Assembly-CSharp::QuestionDatabase
+  worldType: 1
+  subject: Physics
+  mcqQuestions:
+  - questionText: What force pulls objects toward the Earth?
+    options:
+    - Magnetism
+    - Gravity
+    - Friction
+    - Electricity
+    correctIndex: 2
+    difficulty: 0
+    world: 1
+    points: 3
+  - questionText: Which unit is used to measure force?
+    options:
+    - Joule
+    - Pascal
+    - Newton
+    - Watt
+    correctIndex: 3
+    difficulty: 0
+    world: 1
+    points: 3
+  - questionText: What happens to your weight on the Moon?
+    options:
+    - It increases
+    - It stays the same
+    - It decreases
+    - It becomes zero
+    correctIndex: 3
+    difficulty: 0
+    world: 1
+    points: 3
+  - questionText: Which of these is a form of energy?
+    options:
+    - Speed
+    - Heat
+    - Weight
+    - Distance
+    correctIndex: 2
+    difficulty: 0
+    world: 1
+    points: 3
+  - questionText: What law states that every action has an equal and opposite reaction?
+    options:
+    - "Newton\u2019s First Law"
+    - "Newton\u2019s Second Law"
+    - "Newton\u2019s Third Law"
+    - Law of Gravitation
+    correctIndex: 3
+    difficulty: 0
+    world: 0
+    points: 0
+  - questionText: Which quantity is a vector?
+    options:
+    - Speed
+    - Distance
+    - Mass
+    - Velocity
+    correctIndex: 4
+    difficulty: 1
+    world: 1
+    points: 5
+  - questionText: What happens to resistance if the length of a wire increases?
+    options:
+    - It decreases
+    - It becomes zero
+    - It increases
+    - It increases
+    correctIndex: 4
+    difficulty: 1
+    world: 1
+    points: 5
+  - questionText: 'Sound cannot travel through:'
+    options:
+    - Air
+    - Water
+    - Steel
+    - Vacuum
+    correctIndex: 4
+    difficulty: 1
+    world: 1
+    points: 5
+  - questionText: What is the SI unit of electric charge?
+    options:
+    - Volt
+    - Ampere
+    - Coulomb
+    - Ohm
+    correctIndex: 3
+    difficulty: 2
+    world: 1
+    points: 10
+  - questionText: "Which equation represents Einstein\u2019s mass\u2013energy equivalence?"
+    options:
+    - F = ma
+    - "E = mc\xB2"
+    - V = IR
+    - p = mv
+    correctIndex: 2
+    difficulty: 2
+    world: 1
+    points: 10
+  - questionText: What increases when an object approaches the speed of light?
+    options:
+    - Length
+    - Mass
+    - Time flow
+    - Energy only
+    correctIndex: 2
+    difficulty: 2
+    world: 1
+    points: 10
+  - questionText: "What does the area under a velocity\u2013time graph represent?"
+    options:
+    - Speed
+    - Acceleration
+    - Distance traveled
+    - Force
+    correctIndex: 3
+    difficulty: 2
+    world: 1
+    points: 10

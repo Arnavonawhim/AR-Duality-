@@ -1,0 +1,137 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e69e75f09943da445a689d628bb1ceb8, type: 3}
+  m_Name: SciFi_Questions
+  m_EditorClassIdentifier: Assembly-CSharp::QuestionDatabase
+  worldType: 0
+  subject: Space/Astronomy
+  mcqQuestions:
+  - questionText: Which planet is closest to the Sun?
+    options:
+    - Venus
+    - Earth
+    - Mercury
+    - Mars
+    correctIndex: 3
+    difficulty: 0
+    world: 0
+    points: 3
+  - questionText: What is the name of our galaxy?
+    options:
+    - Andromeda
+    - Milky Way
+    - Orion
+    - Pegasus
+    correctIndex: 2
+    difficulty: 0
+    world: 0
+    points: 3
+  - questionText: What do we call a rock from space that reaches Earth?
+    options:
+    - Asteroid
+    - Meteor
+    - Comet
+    - Satellite
+    correctIndex: 2
+    difficulty: 0
+    world: 0
+    points: 3
+  - questionText: 'The Sun is a:'
+    options:
+    - Planet
+    - Galaxy
+    - Star
+    - Black hole
+    correctIndex: 3
+    difficulty: 0
+    world: 0
+    points: 3
+  - questionText: Which planet has the most moons?
+    options:
+    - Earth
+    - Mars
+    - Jupiter
+    - Venus
+    correctIndex: 3
+    difficulty: 1
+    world: 0
+    points: 5
+  - questionText: What causes day and night on Earth?
+    options:
+    - Revolution
+    - Rotation
+    - Gravity
+    - Orbit
+    correctIndex: 2
+    difficulty: 1
+    world: 0
+    points: 5
+  - questionText: Which gas is most abundant in the Sun?
+    options:
+    - Oxygen
+    - Helium
+    - Hydrogen
+    - Carbon
+    correctIndex: 3
+    difficulty: 1
+    world: 0
+    points: 5
+  - questionText: What is the name of the first artificial satellite?
+    options:
+    - Apollo 11
+    - Voyager 1
+    - Sputnik 1
+    - Hubble
+    correctIndex: 3
+    difficulty: 1
+    world: 0
+    points: 5
+  - questionText: What is a light-year a measure of?
+    options:
+    - Time
+    - Brightness
+    - Distance
+    - Speed
+    correctIndex: 3
+    difficulty: 2
+    world: 0
+    points: 10
+  - questionText: What happens beyond the event horizon of a black hole?
+    options:
+    - Time stops
+    - Light cannot escape
+    - Light cannot escape
+    - Matter turns into energy
+    correctIndex: 2
+    difficulty: 2
+    world: 0
+    points: 10
+  - questionText: Which planet rotates on its side?
+    options:
+    - Neptune
+    - Saturn
+    - Uranus
+    - Mars
+    correctIndex: 3
+    difficulty: 2
+    world: 0
+    points: 10
+  - questionText: What force keeps planets in orbit around the Sun?
+    options:
+    - Magnetism
+    - Nuclear force
+    - Gravity
+    - Radiation
+    correctIndex: 3
+    difficulty: 2
+    world: 0
+    points: 10

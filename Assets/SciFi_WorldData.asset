@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 36b04fe2b1e0e2a4890033f2c7e84d04, type: 3}
-  m_Name: EarthWorldData
+  m_Name: SciFi_WorldData
   m_EditorClassIdentifier: Assembly-CSharp::WorldData
   worldType: 1
   worldName: Earth

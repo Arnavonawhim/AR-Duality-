@@ -1,0 +1,137 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e69e75f09943da445a689d628bb1ceb8, type: 3}
+  m_Name: Library_Questions
+  m_EditorClassIdentifier: Assembly-CSharp::QuestionDatabase
+  worldType: 2
+  subject: General Knowledge
+  mcqQuestions:
+  - questionText: What is the capital of India?
+    options:
+    - Mumbai
+    - Chennai
+    - New Delhi
+    - Kolkata
+    correctIndex: 3
+    difficulty: 0
+    world: 0
+    points: 3
+  - questionText: "How many continents are there?\t"
+    options:
+    - 5
+    - 6
+    - 7
+    - 8
+    correctIndex: 3
+    difficulty: 0
+    world: 2
+    points: 3
+  - questionText: Which animal is known as the King of the Jungle?
+    options:
+    - Tiger
+    - Elephant
+    - Lion
+    - Leopard
+    correctIndex: 3
+    difficulty: 0
+    world: 2
+    points: 3
+  - questionText: "Which color is made by mixing red and blue?\t"
+    options:
+    - Green
+    - Purple
+    - Orange
+    - Yellow
+    correctIndex: 2
+    difficulty: 0
+    world: 0
+    points: 3
+  - questionText: Who wrote Romeo and Juliet?
+    options:
+    - Charles Dickens
+    - William Shakespeare
+    - Jane Austen
+    - Mark Twain
+    correctIndex: 2
+    difficulty: 1
+    world: 2
+    points: 5
+  - questionText: What is the largest ocean on Earth?
+    options:
+    - Atlantic
+    - Indian
+    - Arctic
+    - Pacific
+    correctIndex: 4
+    difficulty: 1
+    world: 2
+    points: 5
+  - questionText: Which country gifted the Statue of Liberty to the USA?
+    options:
+    - England
+    - France
+    - Germany
+    - Italy
+    correctIndex: 2
+    difficulty: 1
+    world: 2
+    points: 5
+  - questionText: What is the chemical symbol for gold?
+    options:
+    - Go
+    - Au
+    - Ag
+    - Gd
+    correctIndex: 2
+    difficulty: 1
+    world: 2
+    points: 5
+  - questionText: Which organelle is called the powerhouse of the cell?
+    options:
+    - Nucleus
+    - Ribosome
+    - Mitochondria
+    - Chloroplast
+    correctIndex: 3
+    difficulty: 2
+    world: 2
+    points: 10
+  - questionText: Which year did World War II end?
+    options:
+    - 1942
+    - 1943
+    - 1945
+    - 1947
+    correctIndex: 3
+    difficulty: 2
+    world: 2
+    points: 10
+  - questionText: Who was the first person to walk on the Moon?
+    options:
+    - 'Buzz Aldrin '
+    - Yuri Gagarin
+    - Neil Armstrong
+    - Michael Collins
+    correctIndex: 3
+    difficulty: 2
+    world: 2
+    points: 10
+  - questionText: Which country has the longest coastline in the world?
+    options:
+    - USA
+    - Australia
+    - Russia
+    - Canada
+    correctIndex: 4
+    difficulty: 2
+    world: 2
+    points: 10
