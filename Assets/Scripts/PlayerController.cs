@@ -21,7 +21,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
-    [SerializeField] private float groundCheckRadius = 0.2f;
+    [SerializeField] private float groundCheckRadius = 0.4f;
     [SerializeField] private LayerMask groundLayer;
 
     [Header("Animation")]
@@ -212,6 +212,7 @@ public class PlayerController : MonoBehaviour
             hasJumped = false;
             Debug.Log("Landed - jump reset");
         }
+
     }
 
     void HandleCoyoteTime()
