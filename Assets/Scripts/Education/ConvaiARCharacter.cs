@@ -6,11 +6,15 @@ using Convai.Scripts.Runtime.Core;
 
 /// <summary>
 /// Manages Convai character placement and interaction in AR mode.
-/// Replaces the robot - the character IS the placed AR object.
+/// Place this on an empty GameObject (e.g. "AR Manager"), NOT on XR Origin.
+/// Assign XR Origin references in Inspector.
 /// </summary>
-[RequireComponent(typeof(ARRaycastManager), typeof(ARPlaneManager))]
 public class ConvaiARCharacter : MonoBehaviour
 {
+    [Header("AR References (From XR Origin)")]
+    [SerializeField] private ARRaycastManager raycastManager;
+    [SerializeField] private ARPlaneManager planeManager;
+    
     [Header("Character Prefabs (Per World)")]
     [SerializeField] private GameObject sciFiCharacterPrefab;
     [SerializeField] private GameObject earthCharacterPrefab;
@@ -26,22 +30,25 @@ public class ConvaiARCharacter : MonoBehaviour
     [SerializeField] private LearningSessionController learningController;
     [SerializeField] private QuizSessionController quizController;
     
-    private ARRaycastManager raycastManager;
-    private ARPlaneManager planeManager;
     private GameObject characterInstance;
     private ConvaiNPC convaiNPC;
     private bool characterPlaced;
     private Camera arCamera;
     
-    void Awake()
-    {
-        raycastManager = GetComponent<ARRaycastManager>();
-        planeManager = GetComponent<ARPlaneManager>();
-        arCamera = Camera.main;
-    }
-    
     void Start()
     {
+        arCamera = Camera.main;
+        
+        // Validate AR references
+        if (raycastManager == null)
+        {
+            Debug.LogError("[ConvaiAR] ARRaycastManager not assigned! Drag XR Origin's ARRaycastManager here.");
+        }
+        if (planeManager == null)
+        {
+            Debug.LogError("[ConvaiAR] ARPlaneManager not assigned! Drag XR Origin's ARPlaneManager here.");
+        }
+        
         // Hide session UIs at start
         if (learningUI) learningUI.SetActive(false);
         if (quizUI) quizUI.SetActive(false);
@@ -51,7 +58,7 @@ public class ConvaiARCharacter : MonoBehaviour
     
     void Update()
     {
-        if (!characterPlaced && Input.touchCount > 0)
+        if (!characterPlaced && raycastManager != null && Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
             if (touch.phase == TouchPhase.Began)
@@ -79,7 +86,7 @@ public class ConvaiARCharacter : MonoBehaviour
         GameObject prefab = GetCharacterPrefabForWorld();
         if (prefab == null)
         {
-            Debug.LogError("No character prefab found for current world!");
+            Debug.LogError("[ConvaiAR] No character prefab found for current world!");
             return;
         }
         
@@ -89,13 +96,21 @@ public class ConvaiARCharacter : MonoBehaviour
         
         // Get ConvaiNPC component
         convaiNPC = characterInstance.GetComponent<ConvaiNPC>();
+        if (convaiNPC == null)
+        {
+            Debug.LogWarning("[ConvaiAR] Character prefab missing ConvaiNPC component!");
+        }
         
         // Hide placement UI, disable plane detection
         if (placementUI) placementUI.SetActive(false);
-        planeManager.enabled = false;
-        foreach (var plane in planeManager.trackables)
+        
+        if (planeManager != null)
         {
-            plane.gameObject.SetActive(false);
+            planeManager.enabled = false;
+            foreach (var plane in planeManager.trackables)
+            {
+                plane.gameObject.SetActive(false);
+            }
         }
         
         // Start session based on teleporter type
@@ -110,8 +125,14 @@ public class ConvaiARCharacter : MonoBehaviour
             return WorldManager.Instance.CurrentWorldData.characterPrefab;
         }
         
-        // Fallback to per-world prefabs
-        return WorldManager.Instance?.CurrentWorld switch
+        // Fallback to per-world prefabs assigned in Inspector
+        if (WorldManager.Instance == null)
+        {
+            Debug.LogWarning("[ConvaiAR] WorldManager not found, using SciFi prefab as default");
+            return sciFiCharacterPrefab;
+        }
+        
+        return WorldManager.Instance.CurrentWorld switch
         {
             WorldType.SciFi => sciFiCharacterPrefab,
             WorldType.Earth => earthCharacterPrefab,
@@ -122,9 +143,15 @@ public class ConvaiARCharacter : MonoBehaviour
     
     void StartSession()
     {
-        if (WorldManager.Instance == null) return;
+        if (WorldManager.Instance == null)
+        {
+            Debug.LogWarning("[ConvaiAR] WorldManager not found, defaulting to Learning mode");
+            StartLearningMode();
+            return;
+        }
         
         var teleporterType = WorldManager.Instance.CurrentTeleporterType;
+        Debug.Log($"[ConvaiAR] Starting {teleporterType} session");
         
         if (teleporterType == TeleporterType.Learning)
         {
@@ -140,11 +167,8 @@ public class ConvaiARCharacter : MonoBehaviour
     {
         if (learningUI) learningUI.SetActive(true);
         if (quizUI) quizUI.SetActive(false);
-        
-        // Enable talk button for voice interaction
         if (talkButton) talkButton.SetActive(true);
         
-        // Start the learning session
         if (learningController)
         {
             learningController.SetConvaiNPC(convaiNPC);
@@ -159,10 +183,8 @@ public class ConvaiARCharacter : MonoBehaviour
         if (learningUI) learningUI.SetActive(false);
         if (talkButton) talkButton.SetActive(false);
         
-        // Start the quiz session
         if (quizController)
         {
-            // Get the correct question database for current world
             var worldData = WorldManager.Instance?.CurrentWorldData;
             if (worldData?.questionDatabase != null)
             {
@@ -174,7 +196,7 @@ public class ConvaiARCharacter : MonoBehaviour
         }
     }
     
-    // Called by Talk button (hold)
+    // Called by Talk button (PointerDown event)
     public void OnTalkButtonDown()
     {
         if (convaiNPC != null)
@@ -184,7 +206,7 @@ public class ConvaiARCharacter : MonoBehaviour
         }
     }
     
-    // Called by Talk button (release)
+    // Called by Talk button (PointerUp event)
     public void OnTalkButtonUp()
     {
         if (convaiNPC != null)
@@ -194,13 +216,11 @@ public class ConvaiARCharacter : MonoBehaviour
         }
     }
     
-    // Send text message to Convai character
     public void SendMessage(string message)
     {
         if (convaiNPC != null)
         {
             convaiNPC.SendTextDataAsync(message);
-            Debug.Log($"[ConvaiAR] Sent: {message}");
         }
     }
     
