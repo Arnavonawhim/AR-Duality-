@@ -12,19 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36b04fe2b1e0e2a4890033f2c7e84d04, type: 3}
   m_Name: SciFi_WorldData
   m_EditorClassIdentifier: Assembly-CSharp::WorldData
-  worldType: 1
-  worldName: Earth
+  worldType: 0
+  worldName: Sci-Fi
   worldDescription: 
   characterName: Scientist
-  convaiCharacterId: 93d8116e-0409-11f1-985a-42010a7be027
-  characterPrefab: {fileID: 0}
-  teachingScript: 
+  convaiCharacterId: 3729311c-04a6-11f1-afd7-42010a7be027
+  characterPrefab: {fileID: 5352998927770448217, guid: 8bbb099d28e712c4d8dca5784cfe8720, type: 3}
+  teachingScript: Teach about space
   teachingDuration: 90
+  questionDatabase: {fileID: 11400000, guid: 6339462c8cd199e42b3da7aa404be9e5, type: 2}
+  learningTopics:
+  - Forces and Motion
+  - Light And Sound
   knowledgePointsRequired: 0
-  powerReward: 2
-  powerName: GravityManipulation
-  powerDescription: Pull Objects towards you
+  powerReward: 1
+  powerName: Jetpack
+  powerDescription: Fly
   nextSceneName: LibraryScene
-  disableJump: 0
+  disableJump: 1
   worldIcon: {fileID: 0}
   themeColor: {r: 0.06837866, g: 0.7735849, b: 0.026759136, a: 1}
