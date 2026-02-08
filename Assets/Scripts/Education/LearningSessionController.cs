@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using Convai.Scripts.Runtime.Core;
 
 public class LearningSessionController : MonoBehaviour
 {
@@ -16,6 +17,7 @@ public class LearningSessionController : MonoBehaviour
     
     [Header("Convai Integration")]
     [SerializeField] private ConvaiEducationBridge convaiBridge;
+    private ConvaiNPC convaiNPC;
     
     [Header("Settings")]
     [SerializeField] private float lessonDuration = 90f;
@@ -90,16 +92,24 @@ public class LearningSessionController : MonoBehaviour
         if (askDoubtsButton) askDoubtsButton.gameObject.SetActive(false);
         if (noDoubtsButton) noDoubtsButton.gameObject.SetActive(false);
         
-        // Enable voice input
-        if (convaiBridge) convaiBridge.StartListening();
-        if (subtitleText) subtitleText.text = "Ask your question...";
+        // Enable voice input - prefer direct ConvaiNPC, fallback to bridge
+        if (convaiNPC != null)
+            convaiNPC.StartListening();
+        else if (convaiBridge) 
+            convaiBridge.StartListening();
+        
+        if (subtitleText) subtitleText.text = "Hold the Talk button to ask your question...";
     }
     
     void OnFinishDoubts()
     {
         isAskingDoubts = false;
         if (doubtsPanel) doubtsPanel.SetActive(false);
-        if (convaiBridge) convaiBridge.StopListening();
+        
+        if (convaiNPC != null)
+            convaiNPC.StopListening();
+        else if (convaiBridge) 
+            convaiBridge.StopListening();
         
         EndSession();
     }
@@ -113,5 +123,13 @@ public class LearningSessionController : MonoBehaviour
     {
         WorldManager.Instance?.AddKnowledgePoints(10);
         ARSessionManager.Instance?.ReturnToWorld();
+    }
+    
+    /// <summary>
+    /// Set the ConvaiNPC reference for direct voice interaction
+    /// </summary>
+    public void SetConvaiNPC(ConvaiNPC npc)
+    {
+        convaiNPC = npc;
     }
 }

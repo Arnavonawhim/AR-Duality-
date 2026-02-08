@@ -40,6 +40,14 @@ public class QuizSessionController : MonoBehaviour
         if (quizUI) quizUI.SetActive(false);
     }
     
+    /// <summary>
+    /// Set the question database for this quiz session (called by ConvaiARCharacter)
+    /// </summary>
+    public void SetQuestionDatabase(QuestionDatabase db)
+    {
+        questionDatabase = db;
+    }
+    
     public void StartQuizSession()
     {
         if (quizUI) quizUI.SetActive(true);

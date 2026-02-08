@@ -31,7 +31,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Button leftButton;
     [SerializeField] private Button rightButton;
     [SerializeField] private Button jumpButton;
-    [SerializeField] private Button attackButton;
+    // Attack button removed - no longer a feature
 
     [Header("Scale UI")]
     [SerializeField] private GameObject scaleTimerUI;
@@ -131,10 +131,7 @@ public class PlayerController : MonoBehaviour
             SetupButton(jumpButton, () => { jumpBufferCounter = jumpBufferTime; jumpHeld = true; }, () => jumpHeld = false);
         }
         
-        if (attackButton != null)
-        {
-            attackButton.onClick.AddListener(Attack);
-        }
+        // Attack button removed
     }
 
     void SetupButton(Button button, System.Action onDown, System.Action onUp)
@@ -350,10 +347,7 @@ public class PlayerController : MonoBehaviour
         animator.SetFloat("VelocityY", rb.linearVelocity.y);
     }
 
-    void Attack()
-    {
-        if (animator != null) animator.SetTrigger("Attack");
-    }
+    // Attack method removed - no longer a feature
 
     public void ApplyJumpPadForce(float force)
     {

@@ -1,65 +1,111 @@
 using UnityEngine;
+using Convai.Scripts.Runtime.Core;
 
+/// <summary>
+/// Bridge between education system and Convai SDK.
+/// Provides simplified interface for voice interaction with Convai characters.
+/// </summary>
 public class ConvaiEducationBridge : MonoBehaviour
 {
     [Header("Convai Settings")]
     [SerializeField] private string apiKey;
     
+    [Header("NPC Reference")]
+    [SerializeField] private ConvaiNPC convaiNPC;
+    
     private string activeCharacterId;
     private bool isListening;
     
-    // Convai SDK components (add when SDK works)
-    // private ConvaiNPC convaiNPC;
+    /// <summary>
+    /// Set the active Convai NPC for this bridge
+    /// </summary>
+    public void SetConvaiNPC(ConvaiNPC npc)
+    {
+        convaiNPC = npc;
+        if (npc != null)
+        {
+            Debug.Log($"[Convai] NPC set: {npc.gameObject.name}");
+        }
+    }
     
+    /// <summary>
+    /// Set active character by ID (updates character on Convai backend)
+    /// </summary>
     public void SetActiveCharacter(string characterId)
     {
         activeCharacterId = characterId;
-        // Configure Convai NPC with character ID
-        Debug.Log($"[Convai] Active character: {characterId}");
+        Debug.Log($"[Convai] Active character ID: {characterId}");
     }
     
+    /// <summary>
+    /// Send text message to the Convai character
+    /// </summary>
     public void SendTextInput(string message)
     {
-        if (string.IsNullOrEmpty(activeCharacterId))
+        if (convaiNPC == null)
         {
-            Debug.LogWarning("[Convai] No active character set!");
+            Debug.LogWarning("[Convai] No ConvaiNPC set!");
             return;
         }
         
-        // Send to Convai API
-        Debug.Log($"[Convai] Sending: {message}");
+        if (string.IsNullOrEmpty(message))
+        {
+            Debug.LogWarning("[Convai] Cannot send empty message!");
+            return;
+        }
         
-        // TODO: Use Convai SDK to send message
-        // convaiNPC.SendTextData(message);
+        convaiNPC.SendTextDataAsync(message);
+        Debug.Log($"[Convai] Sent: {message}");
     }
     
+    /// <summary>
+    /// Start voice recording for player speech input
+    /// </summary>
     public void StartListening()
     {
-        isListening = true;
-        Debug.Log("[Convai] Started voice input");
+        if (convaiNPC == null)
+        {
+            Debug.LogWarning("[Convai] No ConvaiNPC set!");
+            return;
+        }
         
-        // TODO: Enable Convai microphone input
-        // convaiNPC.StartRecording();
+        isListening = true;
+        convaiNPC.StartListening();
+        Debug.Log("[Convai] Started voice input");
     }
     
+    /// <summary>
+    /// Stop voice recording
+    /// </summary>
     public void StopListening()
     {
-        isListening = false;
-        Debug.Log("[Convai] Stopped voice input");
+        if (convaiNPC == null)
+        {
+            Debug.LogWarning("[Convai] No ConvaiNPC set!");
+            return;
+        }
         
-        // TODO: Disable Convai microphone input
-        // convaiNPC.StopRecording();
+        isListening = false;
+        convaiNPC.StopListening();
+        Debug.Log("[Convai] Stopped voice input");
     }
     
+    /// <summary>
+    /// Check if currently listening for voice input
+    /// </summary>
+    public bool IsListening() => isListening;
+    
+    /// <summary>
+    /// Set language preference for Convai character responses
+    /// </summary>
     public void SetLanguagePreference(string language)
     {
-        // Set Convai language preference (English/Hindi)
-        Debug.Log($"[Convai] Language set to: {language}");
+        // Language is typically set in the Convai character's backstory/settings
+        Debug.Log($"[Convai] Language preference: {language}");
     }
     
-    // Callback from Convai when response received
-    public void OnConvaiResponse(string response)
-    {
-        Debug.Log($"[Convai] Response: {response}");
-    }
+    /// <summary>
+    /// Get the current ConvaiNPC reference
+    /// </summary>
+    public ConvaiNPC GetConvaiNPC() => convaiNPC;
 }

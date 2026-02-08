@@ -16,6 +16,8 @@ public class WorldData : ScriptableObject
     [Header("Teaching Content")]
     [TextArea(3, 6)] public string teachingScript;
     public float teachingDuration = 90f;
+    public QuestionDatabase questionDatabase;
+    public string[] learningTopics = new string[2];
     
     [Header("Progression")]
     public int knowledgePointsRequired;
