@@ -1,17 +1,19 @@
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
+using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem.EnhancedTouch;
 using System.Collections.Generic;
 using Convai.Scripts.Runtime.Core;
+using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 /// <summary>
 /// Manages Convai character placement and interaction in AR mode.
-/// Place this on an empty GameObject (e.g. "AR Manager"), NOT on XR Origin.
-/// Assign XR Origin references in Inspector.
+/// Uses New Input System for touch handling.
 /// </summary>
 public class ConvaiARCharacter : MonoBehaviour
 {
-    [Header("AR References (From XR Origin)")]
+    [Header("AR References (Drag from XR Origin)")]
     [SerializeField] private ARRaycastManager raycastManager;
     [SerializeField] private ARPlaneManager planeManager;
     
@@ -30,109 +32,147 @@ public class ConvaiARCharacter : MonoBehaviour
     [SerializeField] private LearningSessionController learningController;
     [SerializeField] private QuizSessionController quizController;
     
+    [Header("Debug")]
+    [SerializeField] private bool debugMode = true;
+    
     private GameObject characterInstance;
     private ConvaiNPC convaiNPC;
     private bool characterPlaced;
     private Camera arCamera;
+    private List<ARRaycastHit> hits = new List<ARRaycastHit>();
+    
+    void OnEnable()
+    {
+        EnhancedTouchSupport.Enable();
+    }
+    
+    void OnDisable()
+    {
+        EnhancedTouchSupport.Disable();
+    }
     
     void Start()
     {
+        Debug.Log("[ConvaiAR] Start called");
         arCamera = Camera.main;
         
-        // Validate AR references
+        // Auto-find AR references if not assigned
         if (raycastManager == null)
         {
-            Debug.LogError("[ConvaiAR] ARRaycastManager not assigned! Drag XR Origin's ARRaycastManager here.");
-        }
-        if (planeManager == null)
-        {
-            Debug.LogError("[ConvaiAR] ARPlaneManager not assigned! Drag XR Origin's ARPlaneManager here.");
+            raycastManager = FindObjectOfType<ARRaycastManager>();
+            if (raycastManager != null)
+                Debug.Log("[ConvaiAR] Found ARRaycastManager automatically");
+            else
+                Debug.LogError("[ConvaiAR] ARRaycastManager not found!");
         }
         
+        if (planeManager == null)
+        {
+            planeManager = FindObjectOfType<ARPlaneManager>();
+            if (planeManager != null)
+                Debug.Log("[ConvaiAR] Found ARPlaneManager automatically");
+            else
+                Debug.LogError("[ConvaiAR] ARPlaneManager not found!");
+        }
+        
+        // Check camera
+        if (arCamera == null)
+            Debug.LogError("[ConvaiAR] No main camera found!");
+        else
+            Debug.Log($"[ConvaiAR] Main camera: {arCamera.name}");
+        
         // Hide session UIs at start
-        if (learningUI) learningUI.SetActive(false);
-        if (quizUI) quizUI.SetActive(false);
-        if (talkButton) talkButton.SetActive(false);
-        if (placementUI) placementUI.SetActive(true);
+        SetUIState(true, false, false, false);
+        
+        Debug.Log("[ConvaiAR] Ready for character placement");
+    }
+    
+    void SetUIState(bool placement, bool learning, bool quiz, bool talk)
+    {
+        if (placementUI) placementUI.SetActive(placement);
+        if (learningUI) learningUI.SetActive(learning);
+        if (quizUI) quizUI.SetActive(quiz);
+        if (talkButton) talkButton.SetActive(talk);
     }
     
     void Update()
     {
-        if (!characterPlaced && raycastManager != null && Input.touchCount > 0)
+        if (characterPlaced) 
         {
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began)
+            // Make character face the camera
+            if (characterInstance != null && arCamera != null)
             {
-                List<ARRaycastHit> hits = new List<ARRaycastHit>();
-                if (raycastManager.Raycast(touch.position, hits, TrackableType.PlaneWithinPolygon))
-                {
-                    PlaceCharacter(hits[0].pose.position);
-                }
+                Vector3 lookPos = arCamera.transform.position;
+                lookPos.y = characterInstance.transform.position.y;
+                characterInstance.transform.LookAt(lookPos);
             }
+            return;
         }
         
-        // Make character face the camera
-        if (characterPlaced && characterInstance != null && arCamera != null)
+        // Handle touch input using New Input System
+        if (raycastManager != null && Touch.activeTouches.Count > 0)
         {
-            Vector3 lookPos = arCamera.transform.position;
-            lookPos.y = characterInstance.transform.position.y;
-            characterInstance.transform.LookAt(lookPos);
+            Touch touch = Touch.activeTouches[0];
+            
+            if (touch.phase == UnityEngine.InputSystem.TouchPhase.Began)
+            {
+                if (debugMode) Debug.Log($"[ConvaiAR] Touch detected at {touch.screenPosition}");
+                
+                hits.Clear();
+                if (raycastManager.Raycast(touch.screenPosition, hits, TrackableType.PlaneWithinPolygon))
+                {
+                    if (debugMode) Debug.Log($"[ConvaiAR] Plane hit at {hits[0].pose.position}");
+                    PlaceCharacter(hits[0].pose.position);
+                }
+                else
+                {
+                    if (debugMode) Debug.Log("[ConvaiAR] No plane hit - point camera at a flat surface");
+                }
+            }
         }
     }
     
     void PlaceCharacter(Vector3 position)
     {
-        // Get world-specific prefab
+        Debug.Log($"[ConvaiAR] Placing character at {position}");
+        
         GameObject prefab = GetCharacterPrefabForWorld();
         if (prefab == null)
         {
-            Debug.LogError("[ConvaiAR] No character prefab found for current world!");
+            Debug.LogError("[ConvaiAR] No character prefab! Cannot spawn.");
             return;
         }
         
-        // Spawn character at position
         characterInstance = Instantiate(prefab, position, Quaternion.identity);
         characterPlaced = true;
+        Debug.Log($"[ConvaiAR] Character spawned: {characterInstance.name}");
         
-        // Get ConvaiNPC component
         convaiNPC = characterInstance.GetComponent<ConvaiNPC>();
         if (convaiNPC == null)
-        {
-            Debug.LogWarning("[ConvaiAR] Character prefab missing ConvaiNPC component!");
-        }
+            Debug.LogError("[ConvaiAR] Character prefab missing ConvaiNPC component!");
+        else
+            Debug.Log($"[ConvaiAR] ConvaiNPC found with ID: {convaiNPC.characterID}");
         
-        // Hide placement UI, disable plane detection
         if (placementUI) placementUI.SetActive(false);
         
         if (planeManager != null)
         {
             planeManager.enabled = false;
             foreach (var plane in planeManager.trackables)
-            {
                 plane.gameObject.SetActive(false);
-            }
         }
         
-        // Start session based on teleporter type
         StartSession();
     }
     
     GameObject GetCharacterPrefabForWorld()
     {
-        // First try to get from WorldData
         if (WorldManager.Instance?.CurrentWorldData?.characterPrefab != null)
-        {
             return WorldManager.Instance.CurrentWorldData.characterPrefab;
-        }
         
-        // Fallback to per-world prefabs assigned in Inspector
-        if (WorldManager.Instance == null)
-        {
-            Debug.LogWarning("[ConvaiAR] WorldManager not found, using SciFi prefab as default");
-            return sciFiCharacterPrefab;
-        }
+        WorldType world = WorldManager.Instance?.CurrentWorld ?? WorldType.SciFi;
         
-        return WorldManager.Instance.CurrentWorld switch
+        return world switch
         {
             WorldType.SciFi => sciFiCharacterPrefab,
             WorldType.Earth => earthCharacterPrefab,
@@ -143,60 +183,48 @@ public class ConvaiARCharacter : MonoBehaviour
     
     void StartSession()
     {
-        if (WorldManager.Instance == null)
-        {
-            Debug.LogWarning("[ConvaiAR] WorldManager not found, defaulting to Learning mode");
-            StartLearningMode();
-            return;
-        }
-        
-        var teleporterType = WorldManager.Instance.CurrentTeleporterType;
+        TeleporterType teleporterType = WorldManager.Instance?.CurrentTeleporterType ?? TeleporterType.Learning;
         Debug.Log($"[ConvaiAR] Starting {teleporterType} session");
         
         if (teleporterType == TeleporterType.Learning)
-        {
             StartLearningMode();
-        }
         else
-        {
             StartQuizMode();
-        }
     }
     
     void StartLearningMode()
     {
-        if (learningUI) learningUI.SetActive(true);
-        if (quizUI) quizUI.SetActive(false);
-        if (talkButton) talkButton.SetActive(true);
+        Debug.Log("[ConvaiAR] Starting Learning Mode");
+        SetUIState(false, true, false, true);
         
-        if (learningController)
+        if (learningController != null)
         {
             learningController.SetConvaiNPC(convaiNPC);
             learningController.gameObject.SetActive(true);
             learningController.StartLearningSession();
         }
+        else
+            Debug.LogError("[ConvaiAR] LearningSessionController not assigned!");
     }
     
     void StartQuizMode()
     {
-        if (quizUI) quizUI.SetActive(true);
-        if (learningUI) learningUI.SetActive(false);
-        if (talkButton) talkButton.SetActive(false);
+        Debug.Log("[ConvaiAR] Starting Quiz Mode");
+        SetUIState(false, false, true, false);
         
-        if (quizController)
+        if (quizController != null)
         {
             var worldData = WorldManager.Instance?.CurrentWorldData;
             if (worldData?.questionDatabase != null)
-            {
                 quizController.SetQuestionDatabase(worldData.questionDatabase);
-            }
             
             quizController.gameObject.SetActive(true);
             quizController.StartQuizSession();
         }
+        else
+            Debug.LogError("[ConvaiAR] QuizSessionController not assigned!");
     }
     
-    // Called by Talk button (PointerDown event)
     public void OnTalkButtonDown()
     {
         if (convaiNPC != null)
@@ -206,7 +234,6 @@ public class ConvaiARCharacter : MonoBehaviour
         }
     }
     
-    // Called by Talk button (PointerUp event)
     public void OnTalkButtonUp()
     {
         if (convaiNPC != null)
@@ -219,11 +246,15 @@ public class ConvaiARCharacter : MonoBehaviour
     public void SendMessage(string message)
     {
         if (convaiNPC != null)
-        {
             convaiNPC.SendTextDataAsync(message);
-        }
     }
     
     public ConvaiNPC GetConvaiNPC() => convaiNPC;
     public bool IsCharacterPlaced() => characterPlaced;
+    
+    public void ExitAR()
+    {
+        string sceneName = WorldManager.Instance?.CurrentWorld.ToString() ?? "SciFi";
+        SceneManager.LoadScene(sceneName);
+    }
 }

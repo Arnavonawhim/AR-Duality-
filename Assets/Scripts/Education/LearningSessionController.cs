@@ -15,13 +15,10 @@ public class LearningSessionController : MonoBehaviour
     [SerializeField] private GameObject doubtsPanel;
     [SerializeField] private Button finishDoubtsButton;
     
-    [Header("Convai Integration")]
-    [SerializeField] private ConvaiEducationBridge convaiBridge;
-    private ConvaiNPC convaiNPC;
-    
     [Header("Settings")]
     [SerializeField] private float lessonDuration = 90f;
     
+    private ConvaiNPC convaiNPC;
     private bool isTeaching;
     private bool isAskingDoubts;
     
@@ -35,33 +32,70 @@ public class LearningSessionController : MonoBehaviour
         if (doubtsPanel) doubtsPanel.SetActive(false);
     }
     
+    /// <summary>
+    /// Set the ConvaiNPC reference for direct voice interaction
+    /// MUST be called before StartLearningSession()
+    /// </summary>
+    public void SetConvaiNPC(ConvaiNPC npc)
+    {
+        convaiNPC = npc;
+        Debug.Log($"[Learning] ConvaiNPC set: {(npc != null ? npc.gameObject.name : "NULL")}");
+    }
+    
     public void StartLearningSession()
     {
-        if (WorldManager.Instance == null) return;
+        Debug.Log("[Learning] StartLearningSession called");
         
-        string topic = WorldManager.Instance.CurrentTopic;
-        var worldData = WorldManager.Instance.CurrentWorldData;
+        if (convaiNPC == null)
+        {
+            Debug.LogError("[Learning] ConvaiNPC is NULL! Character won't speak.");
+        }
+        
+        string topic = "General Learning";
+        WorldData worldData = null;
+        
+        if (WorldManager.Instance != null)
+        {
+            topic = WorldManager.Instance.CurrentTopic;
+            worldData = WorldManager.Instance.CurrentWorldData;
+        }
         
         if (topicText) topicText.text = topic;
         if (learningUI) learningUI.SetActive(true);
         
-        StartCoroutine(TeachingRoutine(worldData));
+        // Hide doubts buttons initially
+        if (askDoubtsButton) askDoubtsButton.gameObject.SetActive(false);
+        if (noDoubtsButton) noDoubtsButton.gameObject.SetActive(false);
+        
+        StartCoroutine(TeachingRoutine(worldData, topic));
     }
     
-    IEnumerator TeachingRoutine(WorldData worldData)
+    IEnumerator TeachingRoutine(WorldData worldData, string topic)
     {
         isTeaching = true;
         
-        // Start Convai teaching
-        if (convaiBridge && worldData != null)
+        // Send teaching prompt to the Convai character
+        if (convaiNPC != null)
         {
-            string characterId = worldData.convaiCharacterId;
-            if (!string.IsNullOrEmpty(characterId))
-                convaiBridge.SetActiveCharacter(characterId);
+            string teachingPrompt;
             
-            // Send teaching prompt
-            if (!string.IsNullOrEmpty(worldData.teachingScript))
-                convaiBridge.SendTextInput(worldData.teachingScript);
+            if (worldData != null && !string.IsNullOrEmpty(worldData.teachingScript))
+            {
+                teachingPrompt = worldData.teachingScript;
+            }
+            else
+            {
+                // Default teaching prompt with topic
+                teachingPrompt = $"Please teach me about {topic}. Give a clear, educational explanation suitable for a student. Keep it engaging and informative for about 1-2 minutes.";
+            }
+            
+            Debug.Log($"[Learning] Sending teaching prompt: {teachingPrompt}");
+            convaiNPC.SendTextDataAsync(teachingPrompt);
+        }
+        else
+        {
+            Debug.LogError("[Learning] Cannot teach - ConvaiNPC is null!");
+            if (subtitleText) subtitleText.text = "Error: AI Tutor not available";
         }
         
         // Wait for lesson duration
@@ -69,7 +103,7 @@ public class LearningSessionController : MonoBehaviour
         while (elapsed < lessonDuration && isTeaching)
         {
             elapsed += Time.deltaTime;
-            if (subtitleText) subtitleText.text = $"Lesson: {Mathf.CeilToInt(lessonDuration - elapsed)}s remaining";
+            if (subtitleText) subtitleText.text = $"Learning: {Mathf.CeilToInt(lessonDuration - elapsed)}s remaining";
             yield return null;
         }
         
@@ -83,6 +117,7 @@ public class LearningSessionController : MonoBehaviour
         if (askDoubtsButton) askDoubtsButton.gameObject.SetActive(true);
         if (noDoubtsButton) noDoubtsButton.gameObject.SetActive(true);
         if (subtitleText) subtitleText.text = "Lesson complete! Any doubts?";
+        Debug.Log("[Learning] Lesson complete, showing doubts prompt");
     }
     
     void OnAskDoubts()
@@ -92,13 +127,8 @@ public class LearningSessionController : MonoBehaviour
         if (askDoubtsButton) askDoubtsButton.gameObject.SetActive(false);
         if (noDoubtsButton) noDoubtsButton.gameObject.SetActive(false);
         
-        // Enable voice input - prefer direct ConvaiNPC, fallback to bridge
-        if (convaiNPC != null)
-            convaiNPC.StartListening();
-        else if (convaiBridge) 
-            convaiBridge.StartListening();
-        
         if (subtitleText) subtitleText.text = "Hold the Talk button to ask your question...";
+        Debug.Log("[Learning] Doubts mode enabled - ready for voice input");
     }
     
     void OnFinishDoubts()
@@ -108,8 +138,6 @@ public class LearningSessionController : MonoBehaviour
         
         if (convaiNPC != null)
             convaiNPC.StopListening();
-        else if (convaiBridge) 
-            convaiBridge.StopListening();
         
         EndSession();
     }
@@ -121,15 +149,38 @@ public class LearningSessionController : MonoBehaviour
     
     void EndSession()
     {
+        Debug.Log("[Learning] Session ended");
         WorldManager.Instance?.AddKnowledgePoints(10);
-        ARSessionManager.Instance?.ReturnToWorld();
+        
+        // Return to game world
+        if (ARSessionManager.Instance != null)
+        {
+            ARSessionManager.Instance.ReturnToWorld();
+        }
+        else
+        {
+            // Fallback - load previous scene
+            string currentWorld = WorldManager.Instance?.CurrentWorld.ToString() ?? "SciFi";
+            UnityEngine.SceneManagement.SceneManager.LoadScene(currentWorld);
+        }
     }
     
-    /// <summary>
-    /// Set the ConvaiNPC reference for direct voice interaction
-    /// </summary>
-    public void SetConvaiNPC(ConvaiNPC npc)
+    // For external talk button control
+    public void StartListening()
     {
-        convaiNPC = npc;
+        if (convaiNPC != null)
+        {
+            convaiNPC.StartListening();
+            Debug.Log("[Learning] Started listening for voice");
+        }
+    }
+    
+    public void StopListening()
+    {
+        if (convaiNPC != null)
+        {
+            convaiNPC.StopListening();
+            Debug.Log("[Learning] Stopped listening");
+        }
     }
 }

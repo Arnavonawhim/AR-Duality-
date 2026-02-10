@@ -18,8 +18,12 @@ MonoBehaviour:
   characterName: The historian
   convaiCharacterId: 93d8116e-0409-11f1-985a-42010a7be027
   characterPrefab: {fileID: 0}
-  teachingScript: 
+  teachingScript: teahc about general knowledege
   teachingDuration: 90
+  questionDatabase: {fileID: 11400000, guid: bc58da197185d9b4ea342787225a477e, type: 2}
+  learningTopics:
+  - 'general knowledge from india '
+  - general knowledge
   knowledgePointsRequired: 0
   powerReward: 0
   powerName: Win

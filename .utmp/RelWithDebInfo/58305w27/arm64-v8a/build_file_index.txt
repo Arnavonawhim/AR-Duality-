@@ -1,2 +1,0 @@
-C:\Users\centr\Documents\Arnav's Project\Incursion\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\CMakeLists.txt
-C:\Users\centr\Documents\Arnav's Project\Incursion\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\CMakeLists.txt

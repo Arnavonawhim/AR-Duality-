@@ -22242,9 +22242,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: faaa2fcb05668664a8e0757ea5c476be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
-  target: {fileID: 0}
+  target: {fileID: 1389284103}
   smoothTime: 0.25
-  offset: {x: 0, y: 1.5, z: -10}
+  offset: {x: 0, y: 1.5, z: -20}
   followThresholdX: 1.5
 --- !u!114 &1305263314
 MonoBehaviour:

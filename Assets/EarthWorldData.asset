@@ -17,14 +17,18 @@ MonoBehaviour:
   worldDescription: 
   characterName: Scientist
   convaiCharacterId: 93d8116e-0409-11f1-985a-42010a7be027
-  characterPrefab: {fileID: 0}
+  characterPrefab: {fileID: 919132149155446097, guid: 6e7d2d075de916e4fa17dc6c58e937b3, type: 3}
   teachingScript: 
   teachingDuration: 90
+  questionDatabase: {fileID: 11400000, guid: 6c6d85d134a661d4689516ffb62fbc55, type: 2}
+  learningTopics:
+  - laws of motion
+  - gravity
   knowledgePointsRequired: 0
   powerReward: 2
   powerName: GravityManipulation
   powerDescription: Pull Objects towards you
-  nextSceneName: LibraryScene
+  nextSceneName: Library
   disableJump: 0
   worldIcon: {fileID: 0}
   themeColor: {r: 0.06837866, g: 0.7735849, b: 0.026759136, a: 1}

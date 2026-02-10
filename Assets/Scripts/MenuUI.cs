@@ -5,7 +5,7 @@ public class MenuUI : MonoBehaviour
 {
     public void StartGame()
     {
-        SceneManager.LoadScene("levels");
+        SceneManager.LoadScene("Scifii");
     }
 
     public void QuitGame()

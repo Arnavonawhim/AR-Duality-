@@ -28,7 +28,7 @@ MonoBehaviour:
   powerReward: 1
   powerName: Jetpack
   powerDescription: Fly
-  nextSceneName: LibraryScene
+  nextSceneName: Earth
   disableJump: 1
   worldIcon: {fileID: 0}
   themeColor: {r: 0.06837866, g: 0.7735849, b: 0.026759136, a: 1}
