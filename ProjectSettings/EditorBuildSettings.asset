@@ -6,31 +6,15 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
-    path: Assets/Scenes/MainGame.unity
-    guid: 6fec3888ea76a704893cca95b20be90f
+    path: Assets/Convai/ConvaiAR/Scenes/Convai Demo - AR.unity
+    guid: d23e25ca551aacf4c80e8a01703e8490
   - enabled: 1
-    path: Assets/Scenes/ui.unity
-    guid: f88e9c4aba918e8448b475a988922939
-  - enabled: 1
-    path: Assets/Scenes/Scifii.unity
-    guid: 7e0e998077beac54e8b5b8fb41984ff1
-  - enabled: 1
-    path: Assets/Scenes/Earth.unity
-    guid: 6108981320370ca46b7e545d229f199e
-  - enabled: 1
-    path: Assets/Scenes/Library.unity
-    guid: a81bca40edc603d4fa02de5d1b381fe8
-  - enabled: 1
-    path: Assets/Scenes/ARScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
-  - enabled: 0
-    path: Assets/Scenes/level1.unity
-    guid: 33c6e5979ee775b4fafbb4e1bf0be9ae
+    path: Assets/Scenes/test.unity
+    guid: ec02ec4e58c444049bf0b28bba2d2346
   m_configObjects:
-    UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: 830a5ada4ab723840a27a9bfcc957b39, type: 2}
+    UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: b71abdcb0965af745982c15247b1d41a, type: 2}
     UnityEditor.XR.ARKit.ARKitSettings: {fileID: 11400000, guid: 75aefe44a4cb5a5409b5754b25fcc6fe, type: 2}
-    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-    com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 08d4702e78d957c439163ee9be1fb226, type: 2}
-    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 56d5bd29ddbe37c4e800142bc0f64b29, type: 2}
+    com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: ffdcbd180cf4b634bbf03998612b8018, type: 2}
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 72875bb9cae37ab4ea7de2a6a0fcaee4, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: c2ec7ed37b134f4428729408f36ac95f, type: 2}
   m_UseUCBPForAssetBundles: 0
